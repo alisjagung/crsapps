@@ -29,7 +29,7 @@ function App()
       localStorage.setItem("lat",pos.coords.latitude);
       localStorage.setItem("long",pos.coords.longitude);
 
-      getData("https://nominatim.openstreetmap.org/reverse","",{lat: "-6.1518307", lon: "106.8517364", format: "jsonv2"})
+      getData("https://nominatim.openstreetmap.org/reverse","",{lat: pos.coords.latitude, lon: pos.coords.longitude, format: "jsonv2"})
       .then(response => localStorage.setItem("location", response.display_name))
       .catch(error => alert(error));
 
