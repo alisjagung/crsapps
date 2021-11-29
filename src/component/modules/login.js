@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Logo from '../../img/logo-fahrenheit-putih.png';
 import '../../css/custom.css';
 
@@ -8,6 +9,7 @@ export default function Login()
 {
     const [username, setUsername] = useState('');
     const [pwd, setPwd] = useState('');
+    const navigate = useNavigate();
 
     const onUsernameChange = (e) =>
     {
@@ -22,7 +24,8 @@ export default function Login()
     const handleSubmit = () =>
     {
         localStorage.setItem("userId", username);
-
+        localStorage.setItem("userDisplayName", "User Test");
+        navigate("/planning", {replace : true});
     }
     
     return(
