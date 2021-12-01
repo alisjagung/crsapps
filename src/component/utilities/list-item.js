@@ -22,7 +22,7 @@ export default class CustomListItem extends React.Component
         super(props);
         this.state = {
             arrItem: [],
-            keyword: ''
+            kword: ''
         }
     }
 
@@ -31,17 +31,22 @@ export default class CustomListItem extends React.Component
         if(this.props.listItem !== prevProps.listItem)
         {
             this.setState({arrItem: this.props.listItem});
-            console.log(this.state.arrItem);
         }
+    }
+
+    setKword(e)
+    {
+        this.setState({kword : e.target.value});
     }
 
     handleSearch()
     {
-        if(this.state.keyword !== "" && this.state.keyword !== undefined)
+        console.log(this.state.kword);
+        if(this.state.kword !== "" && this.state.kword !== undefined)
         {
             var allItemArr = this.props.listItem;
             var filteredArr = [];
-            var kword = this.state.keyword.toString().trim().toLowerCase();
+            var kword = this.state.kword.toString().trim().toLowerCase();
             for(var i = 0; i < allItemArr.length; i++)
             {
                 for(var key in allItemArr[i])
@@ -112,7 +117,7 @@ export default class CustomListItem extends React.Component
         return(
             <>
                 <Box sx={{display: 'flex', justifyContent: 'space-around'}}>
-                    <TextField label="Search" value={this.state.keyword} onChange={(e) => this.setState({keyword: e.target.value})}  
+                    <TextField label="Search" value={this.state.kword} onChange={this.setKword}  
                         InputProps={{endAdornment: <InputAdornment position="end"><IconButton onClick={this.handleSearch}><SearchIcon /></IconButton></InputAdornment>}}></TextField>
                 </Box>
                 <br/>

@@ -1,23 +1,35 @@
-import React, { useState } from "react";
+import React from "react";
 import { Backdrop, CircularProgress } from "@mui/material";
 
-export default function BackdropLoader (params)
+export default class BackdropLoader extends React.Component
 {
-    const [openLoader, setOpenLoader] = useState(false);
+    openLoader = false;
 
-    const showLoader = (value) =>
+    constructor(props)
     {
-        //setOpenLoader(value);
-        console.log(value);
+        super(props);
+        this.showLoader = this.showLoader.bind(this);
+    }
+   
+    showLoader(value)
+    {
+       this.openLoader = value;
+       console.log(value);
+       this.forceUpdate();
     }
 
-    return(
-        <>
-            <Backdrop 
-            sx={{color: "#FFFFFF", zIndex: (theme) => theme.zIndex.drawer + 1}}
-            open={params.showLoader}>
-                <CircularProgress color="inherit" />
-            </Backdrop>
-        </>
-    );
+    render()
+    {
+        return(
+            <>
+                <Backdrop 
+                sx={{color: "#FFFFFF", zIndex: (theme) => theme.zIndex.drawer + 1}}
+                open={this.openLoader}>
+                    <CircularProgress color="inherit" />
+                </Backdrop>
+            </>
+        );
+    }
+
+    
 }

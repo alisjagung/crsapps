@@ -1,0 +1,10 @@
+.MuiFormHelperText-root, .MuiFormHelperText-sizeMedium, .MuiFormHelperText-contained, .MuiFormHelperText-filled 
+{
+    color: #FF0000 !important;
+    font-style: italic !important;
+}
+.MuiFormHelperText-root, .MuiFormHelperText-sizeMedium, .MuiFormHelperText-contained
+{
+    color: #FF0000 !important;
+    font-style: italic !important;
+}

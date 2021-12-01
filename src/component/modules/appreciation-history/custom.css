@@ -1,0 +1,9 @@
+.appListLoaderHide
+{
+    display: none;
+}
+
+.appListLoaderShow
+{
+    display: block;
+}

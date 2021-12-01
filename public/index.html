@@ -25,7 +25,13 @@
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
+    <div id="root">
+      <div class="loaderClass" style="position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 1234; background-color: rgba(0, 0, 0, 0.6);">
+        <div style="position:fixed;top: 50%;left: 50%;transform: translate(-50%, -50%);">
+            <img src="%PUBLIC_URL%/loader-gif.gif" alt="Loading..." class="ajax-loader" />
+        </div>
+      </div>  
+    </div>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.
@@ -36,5 +42,6 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
+   
   </body>
 </html>

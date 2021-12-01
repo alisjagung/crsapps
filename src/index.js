@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
+
 import App from './App';
 
 import Planning from './component/modules/planning';
@@ -10,8 +11,8 @@ import Extra from './component/modules/extra';
 
 import UserProfile from './component/modules/user-profile';
 import History from './component/modules/history';
-import Appreciation from './component/modules/appreciation';
-import AppreciationHistory from './component/modules/appreciation-history';
+import Appreciation from './component/modules/appreciation/appreciation';
+import AppreciationHistory from './component/modules/appreciation-history/appreciation-history';
 
 import SyncData from './component/modules/sync-data';
 import UploadData from './component/modules/upload-data';

@@ -1,7 +1,7 @@
-import React, { useEffect, useLayoutEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link , useParams } from "react-router-dom";
 
-import { AppBar,  Backdrop, CircularProgress,  Box, Button, Dialog,
+import { AppBar, Box, Button, Dialog,
         Grid, IconButton, MenuItem, Typography, Toolbar } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import { PhotoCamera } from '@mui/icons-material';
@@ -24,19 +24,21 @@ import moment from 'moment';
 import Resizer from "react-image-file-resizer";
 import watermarkjs from 'watermarkjs';
 
-import { Api }  from '../utilities/api';
-import BackdropLoader  from '../utilities/backdrop-loader';
-import { PLANMEET_SERVICES } from '../../config/config';
-import { MASTER_SERVICES } from '../../config/config';
-import AlertMessage from '../utilities/alert-message';
+import { Api }  from '../../utilities/api';
+import BackdropLoader  from '../../utilities/backdrop-loader';
+import { PLANMEET_SERVICES } from '../../../config/config';
+import { MASTER_SERVICES } from '../../../config/config';
+import AlertMessage from '../../utilities/alert-message';
+
+import './custom.css';
 
 export default function Appreciation(params)
 {  
-    const [showLoader, setShowLoader] = useState(false);
+    const openLoaderButtonRef = useRef(null);
+    const hideLoaderButtonRef = useRef(null);
+    const loaderRef = useRef(null);
+
     const [showCustCodeDialog, setShowCustCodeDialog] = useState(false);  
-    // const showLoaderRef = useRef(null);
-    // const hideLoaderRef = useRef(null);
-    // const loaderRef = useRef(<BackdropLoader />);
 
     const [latitude, setLatitude] = useState('');
     const [longitude, setLongitude] = useState('');
@@ -49,6 +51,8 @@ export default function Appreciation(params)
     const [notes, setNotes] = useState('');
     const [imageFile, setImageFile] = useState('');
     const [imagePreview, setImagePreview] = useState('');
+
+    const [helperText, setHelperText] = useState('');
 
     // Validation
     var valid = true;
@@ -71,11 +75,10 @@ export default function Appreciation(params)
         selectableRows : 'none',
         selectableRowsHeader : false,
         selectableRowsHideCheckboxes : true,
+        sort : false,
         viewColumns : false,
         onRowClick : (rowData, rowMeta) => 
         { 
-            // console.log(rowData);
-            // console.log(rowMeta);
             setCustCode(rowData[0]);     
             setShowCustCodeDialog(false); 
         },
@@ -93,10 +96,12 @@ export default function Appreciation(params)
         },
     };
 
-    useLayoutEffect(() => 
+    useEffect(() => 
     {
         if (id !== undefined)
         {
+            openLoaderButtonRef.current.click();
+
             Api(PLANMEET_SERVICES + "appreciation/load-appreciation-by-id").getApi("",{params: {id : id}})
             .then(response =>
                 {
@@ -109,17 +114,21 @@ export default function Appreciation(params)
                     setDtTime(response.data.apprDate);
                     setNotes(response.data.apprInfo);
                     setImageFile(response.data.file);
-                    setImagePreview(URL.createObjectURL(response.data.file));                   
+                    setImagePreview(response.data.fileBase64);              
+                    setHelperText('');     
+                    hideLoaderButtonRef.current.click();
                 })
             .catch(error =>
                 {
                     AlertMessage().showError(error);
                 })   
-                    
+
+                hideLoaderButtonRef.current.click();
         }
         else
         {
-            setShowLoader(true);
+            openLoaderButtonRef.current.click();
+            
             setLatitude(localStorage.getItem("lat"));
             setLongitude(localStorage.getItem("long"));
             setLocation(localStorage.getItem("location"));
@@ -130,6 +139,7 @@ export default function Appreciation(params)
             setNotes('');
             setImageFile('');
             setImagePreview('');
+            setHelperText('*Mandatory Field');
 
             Api(MASTER_SERVICES + "dokter/load-dokter").getApi("",{params: {startDataIndex : 0, perPage : 10, filterBy : '', orderBy : 'KdDokter', orderByDirection : 'asc'}})
             .then(response =>
@@ -140,23 +150,26 @@ export default function Appreciation(params)
             {
                 AlertMessage().showError(error);
             });   
-            
-            setShowLoader(false);
+
+            hideLoaderButtonRef.current.click();
         }
     }, []);
 
 
+    //Change Datetime
     const onDtChange = (newValue) =>
     {
         setDtTime(newValue);
     }
 
+    //Calculate Font Size
     const getFontSize = (fileWidth) =>
     {
         var result =  Math.floor(fileWidth*0.017) + 'px Arial';
         return result;
     }
 
+    //Add Watermark
     const setWatermark = (params) =>
     {
         return watermarkjs([params])
@@ -185,6 +198,7 @@ export default function Appreciation(params)
         })
     }
 
+    //Compress Image
     const setCompress = (params) =>
     {
         var dt = new Date();
@@ -202,7 +216,7 @@ export default function Appreciation(params)
             {
                 setImagePreview(URL.createObjectURL(uri));
                 setImageFile(uri);
-                setShowLoader(false);
+                hideLoaderButtonRef.current.click();   
             },
             "file",
             640,
@@ -210,12 +224,13 @@ export default function Appreciation(params)
             );
     }
 
+    //Image Processing
     const onImageChange = (e) =>
     {
         var imgFile = e.target.files[0];
         if(imgFile)
         {
-            setShowLoader(true);
+            openLoaderButtonRef.current.click(); 
             try 
             {
                 setWatermark(imgFile)
@@ -235,16 +250,19 @@ export default function Appreciation(params)
         }
     }
 
+    //Toggle Open Dialog
     const onCustCodeClick = () =>
     {
        setShowCustCodeDialog(true);
     }
 
+    //Toggle Close Dialog
     const onCustCodeDialogClose = () =>
     {
         setShowCustCodeDialog(false);
     }
 
+    //Validate Data
     const validateData = () =>
     {
         if(pic === "" || pic === undefined)
@@ -276,13 +294,14 @@ export default function Appreciation(params)
         }
     }
 
+    //Save Data
     const saveAppreciation = () =>
     {
         validateData();
         if(valid)
         {
-            setShowLoader(true);
-            console.log(valid);
+            openLoaderButtonRef.current.click();  
+           
             var formData = new FormData();
 
             formData.append("latitude", latitude);
@@ -315,38 +334,50 @@ export default function Appreciation(params)
                     setDtTime(dtTime);
                     setNotes(notes);
                     setImageFile(imageFile);
+
                     setImagePreview(URL.createObjectURL(imageFile));
                 })
-                setShowLoader(false);
+
+                hideLoaderButtonRef.current.click();
         }
     }
     
     return(
     // Appreciation Form Data
     <div className="appr">
+
+        {/* Loader Manipulation Component */}
+        <Button hidden={true} ref={openLoaderButtonRef} onClick={() => loaderRef.current.showLoader(true)}>Show Loader</Button>
+        <Button hidden={true} ref={hideLoaderButtonRef} onClick={() => loaderRef.current.showLoader(false)}>Hide Loader</Button>
+        <BackdropLoader ref={loaderRef} />
+
+        {/* Navigation, Action Button */}
         <Link to="/extra"><Button variant="outlined" startIcon={<ArrowBackIcon />}>
             Back
         </Button></Link>&nbsp;&nbsp;&nbsp;
         <Button variant="outlined" color="success" startIcon={<SaveIcon />} onClick={saveAppreciation} disabled={id === undefined ? false : true}>
             Save
         </Button>
-        {/* <Button ref={showLoaderRef} onClick={() => loaderRef.current.showLoader(true)}>Show Loader</Button>
-        <Button ref={hideLoaderRef} onClick={() => loaderRef.current.showLoader(false)}>Hide Loader</Button> */}
         <hr />
+
+        {/* Title */}
        <Typography variant="h6">APPRECIATION</Typography>
        <br/>
+
+       {/* Form Data */}
         <Grid container spacing={2}>
             <Grid item sm={6}>
-                <TextField label="Latitude" variant="outlined" value={latitude} style={{width:"33ch"}} disabled />
+                <TextField label="Latitude" variant="outlined" helperText={helperText} value={latitude} style={{width:"33ch"}}  disabled />
             </Grid>
             <Grid item sm={6}>
-                <TextField label="Longitude" variant="outlined" value={longitude} style={{width:"33ch"}} disabled />
+                <TextField label="Longitude" variant="outlined" helperText={helperText} value={longitude} style={{width:"33ch"}} disabled />
             </Grid>
             <Grid item sm={12}>
-             <TextField label="Location" multiline rows={7} value={location} style={{width:"33ch"}} disabled />
+             <TextField label="Location" helperText={helperText} multiline rows={7} value={location} style={{width:"33ch"}} disabled />
             </Grid>
             <Grid item sm={6}>
-                <TextField select label="PIC" variant="outlined" value={pic} onChange={(e) => setPic(e.target.value)} style={{width:"33ch"}} 
+                <TextField select label="PIC" variant="outlined" helperText={helperText} 
+                    value={pic} onChange={(e) => setPic(e.target.value)} style={{width:"33ch"}} 
                     disabled={id === undefined ? false : true}>
                     <MenuItem key="MR" value="MR">MR</MenuItem>
                     <MenuItem key="AM" value="AM">AM</MenuItem>
@@ -355,13 +386,17 @@ export default function Appreciation(params)
                 </TextField>
             </Grid>
             <Grid item sm={6}>
-                <TextField label="Name" variant="outlined" value={userCode} style={{width:"33ch"}} disabled />
+                <TextField label="Name" variant="outlined" helperText={helperText} value={userCode} style={{width:"33ch"}} disabled />
             </Grid>
             <Grid item sm={6}>
-                <TextField label="Customer Code" variant="outlined" value={custCode} onChange={(e) => setCustCode(e.target.value)} 
+                <TextField label="Customer Code" variant="outlined" helperText={helperText} 
+                    value={custCode} onChange={(e) => setCustCode(e.target.value)} 
                     style={{width:"33ch"}} 
-                    InputProps={{endAdornment: <InputAdornment position="end"><IconButton onClick={onCustCodeClick}><SearchIcon /></IconButton></InputAdornment>}}
-                    disabled={id === undefined ? false : true}>
+                    InputProps={{endAdornment: <InputAdornment position="end">
+                        <IconButton onClick={onCustCodeClick} disabled={id === undefined ? false : true}>
+                            <SearchIcon />
+                        </IconButton></InputAdornment>}}
+                    disabled={true}>
                 </TextField>
             </Grid>
             <Grid item sm={6}>
@@ -373,13 +408,14 @@ export default function Appreciation(params)
                         minDate={id === undefined ? new Date() : dtTime}
                         maxDate={id === undefined ? new Date() : dtTime}
                         onChange={onDtChange}
-                        renderInput={(params) => <TextField {...params} />}
+                        renderInput={(params) => <TextField {...params} helperText={helperText} />}
                         disabled
                     />
                 </LocalizationProvider>
             </Grid>
             <Grid item sm={12}>
-                <TextField label="Notes" variant="outlined" multiline rows={5} value={notes} onChange={(e) => setNotes(e.target.value)} 
+                <TextField label="Notes" variant="outlined" helperText={helperText}
+                    multiline rows={5} value={notes} onChange={(e) => setNotes(e.target.value)} 
                     style={{width:"33ch"}}
                     disabled={id === undefined ? false : true}
                      />
@@ -425,11 +461,7 @@ export default function Appreciation(params)
                     />
                 </ThemeProvider>
             </AppBar>
-            
         </Dialog>
-
-        {/* Loader */}
-        <BackdropLoader showLoader={showLoader}  />
     </div>
     );
 }
