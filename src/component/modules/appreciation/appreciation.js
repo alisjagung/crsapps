@@ -132,7 +132,7 @@ export default function Appreciation(params)
             setLatitude(localStorage.getItem("lat"));
             setLongitude(localStorage.getItem("long"));
             setLocation(localStorage.getItem("location"));
-            setPic('');
+            setPic(localStorage.getItem("userRole"));
             setUserCode(localStorage.getItem("userId"));
             setCustCode('');
             setDtTime((moment(new Date().now).format("YYYY-MM-DD")));
@@ -297,11 +297,11 @@ export default function Appreciation(params)
     //Save Data
     const saveAppreciation = () =>
     {
+        openLoaderButtonRef.current.click();  
+
         validateData();
         if(valid)
-        {
-            openLoaderButtonRef.current.click();  
-           
+        {            
             var formData = new FormData();
 
             formData.append("latitude", latitude);
@@ -320,6 +320,10 @@ export default function Appreciation(params)
                 {
                     AlertMessage().showSuccess(response.data);
                 })
+            .then(() => 
+                {
+                    hideLoaderButtonRef.current.click();
+                })
             .catch(error =>
                 {
                     //console.log(error.response.data);
@@ -336,10 +340,10 @@ export default function Appreciation(params)
                     setImageFile(imageFile);
 
                     setImagePreview(URL.createObjectURL(imageFile));
+                    hideLoaderButtonRef.current.click();
                 })
-
-                hideLoaderButtonRef.current.click();
         }
+        
     }
     
     return(
@@ -347,8 +351,8 @@ export default function Appreciation(params)
     <div className="appr">
 
         {/* Loader Manipulation Component */}
-        <Button hidden={true} ref={openLoaderButtonRef} onClick={() => loaderRef.current.showLoader(true)}>Show Loader</Button>
-        <Button hidden={true} ref={hideLoaderButtonRef} onClick={() => loaderRef.current.showLoader(false)}>Hide Loader</Button>
+        <Button hidden={true} ref={openLoaderButtonRef} onClick={() => loaderRef.current.setHidden(false)}>Show Loader</Button>
+        <Button hidden={true} ref={hideLoaderButtonRef} onClick={() => loaderRef.current.setHidden(true)}>Hide Loader</Button>
         <BackdropLoader ref={loaderRef} />
 
         {/* Navigation, Action Button */}
@@ -380,9 +384,9 @@ export default function Appreciation(params)
                     value={pic} onChange={(e) => setPic(e.target.value)} style={{width:"33ch"}} 
                     disabled={id === undefined ? false : true}>
                     <MenuItem key="MR" value="MR">MR</MenuItem>
-                    <MenuItem key="AM" value="AM">AM</MenuItem>
-                    <MenuItem key="RM" value="RM">RM</MenuItem>
-                    <MenuItem key="SM" value="SM">SM</MenuItem>
+                    <MenuItem key="SPV" value="SPV">AM</MenuItem>
+                    <MenuItem key="DSM" value="DSM">RM</MenuItem>
+                    <MenuItem key="RSM" value="RSM">SM</MenuItem>
                 </TextField>
             </Grid>
             <Grid item sm={6}>

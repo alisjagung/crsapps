@@ -1,5 +1,5 @@
 import React from "react";
-import { Backdrop, CircularProgress } from "@mui/material";
+import LoaderIcon from '../../img/loader-gif.gif';
 
 export default class BackdropLoader extends React.Component
 {
@@ -8,10 +8,10 @@ export default class BackdropLoader extends React.Component
     constructor(props)
     {
         super(props);
-        this.showLoader = this.showLoader.bind(this);
+        this.setHidden = this.setHidden.bind(this);
     }
    
-    showLoader(value)
+    setHidden(value)
     {
        this.openLoader = value;
        console.log(value);
@@ -22,11 +22,16 @@ export default class BackdropLoader extends React.Component
     {
         return(
             <>
-                <Backdrop 
+                {/* <Backdrop 
                 sx={{color: "#FFFFFF", zIndex: (theme) => theme.zIndex.drawer + 1}}
                 open={this.openLoader}>
                     <CircularProgress color="inherit" />
-                </Backdrop>
+                </Backdrop> */}
+                <div className="loaderclassName" style={{position: "fixed", top: 0, width: "100%", height: "100%", zIndex: 1234, backgroundColor: "rgba(0, 0, 0, 0.6)"}} hidden={this.openLoader}>
+                    <div style={{position: "fixed", top: "50%", left: "50%", transform: "translate(-50%, -50%)"}}>
+                        <img src={LoaderIcon} alt="Loading..." className="ajax-loader" />
+                    </div>
+                </div>  
             </>
         );
     }

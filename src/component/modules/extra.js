@@ -23,7 +23,16 @@ export default function Extra()
 
     const handleExtraMenuClick = (item) =>
     {
-        navigate(item.route, {replace: true});
+        if(item.route === "logout")
+        {
+            localStorage.setItem("userId","");
+            window.location.href="/crs-mobile/";
+        }
+        else
+        {
+            navigate(item.route, {replace: true});
+        }
+        
     }
 
     return(

@@ -1,15 +1,19 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+//import { useNavigate } from 'react-router-dom';
 import Logo from '../../img/logo-fahrenheit-putih.png';
 import '../../css/custom.css';
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
+import { Api }  from '../utilities/api';
+import { AUTH_SERVICES } from '../../config/config';
+import AlertMessage from '../utilities/alert-message';
+
 export default function Login()
 {
     const [username, setUsername] = useState('');
     const [pwd, setPwd] = useState('');
-    const navigate = useNavigate();
+    //const navigate = useNavigate();
 
     const onUsernameChange = (e) =>
     {
@@ -23,9 +27,28 @@ export default function Login()
 
     const handleSubmit = () =>
     {
-        localStorage.setItem("userId", username);
-        localStorage.setItem("userDisplayName", "User Test");
-        navigate("/planning", {replace : true});
+       
+        Api(AUTH_SERVICES + "user-login").postApi({kdUser : username, password : pwd}, {})
+        .then(response =>
+        {
+           if(response.isSuccess)
+           {
+            localStorage.setItem("userId", response.data.kdUser);
+            localStorage.setItem("userDisplayName", response.data.nameUser);
+            localStorage.setItem("userRole", response.data.role);
+            //navigate("/planning", {replace : true});
+            window.location.href = "/crs-mobile/planning";
+           }
+           else
+           {
+            AlertMessage().showError(response.message);
+           }
+            
+        })
+        .catch(error =>
+        {
+            AlertMessage().showError(error);
+        });   
     }
     
     return(
@@ -39,7 +62,7 @@ export default function Login()
                     <div className="card-body login-card-body-new">
                         <p className="login-box-msg"><b>CRS</b>Login</p>
 
-                        <form name="loginForm" id="login-form" onSubmit={handleSubmit}>
+                        <form name="loginForm" id="login-form">
                             <div className="input-group mb-3">
                                 <input type="text" className="form-control" placeholder="Username" value={username} onChange={onUsernameChange} required />
                                 <div className="input-group-append">
@@ -58,7 +81,7 @@ export default function Login()
                             </div>
                             <div className="row">
                                 <div className="col-12">
-                                    <button type="submit" className="btn btn-light btn-block">Sign In</button>
+                                    <button type="button" className="btn btn-light btn-block" onClick={handleSubmit}>Sign In</button>
                                 </div>
                             </div>
                         </form>

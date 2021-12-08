@@ -2,7 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
-
 import App from './App';
 
 import Planning from './component/modules/planning';
@@ -25,7 +24,7 @@ import './index.css';
 
 ReactDOM.render(
   //<React.StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename="/crs-mobile/">
       <Routes>
           <Route path="/" element={<App />}>
             <Route path="planning" element={<Planning />} />

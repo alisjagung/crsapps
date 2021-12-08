@@ -1,7 +1,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 
-import { Tabs, Tab } from "@mui/material";
+import { Tabs, Tab, Typography } from "@mui/material";
 
 export default function NavTabs()
 {
@@ -16,6 +16,7 @@ export default function NavTabs()
                 <Tab label="Meeting" value="/meeting" to="/meeting" component={Link} />
                 <Tab label="Extra" value="/extra" to="/extra" component={Link}  />
             </Tabs>
+            <Typography variant="subtitle2" style={{textAlign:"right"}}>Welcome, {localStorage.getItem("userDisplayName")}</Typography>
             <hr/>
         </>
     );

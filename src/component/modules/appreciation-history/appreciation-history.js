@@ -50,11 +50,11 @@ export default class AppreciationHistory extends React.Component
 
     loadData(pageNum, filterString)
     {
+        this.openLoaderButtonRef.current.click();
+
         if(filterString !== '' && filterString !== undefined)
         {
-            this.openLoaderButtonRef.current.click();
-
-            Api(PLANMEET_SERVICES + "appreciation/load-appreciation-by-user").getApi("",{params: {userCode : localStorage.getItem("userId"), filter : filterString, page : pageNum}})
+            Api(PLANMEET_SERVICES + "appreciation/load-appreciation-by-user").getApi("",{params: {userCode : localStorage.getItem("userId"), role: localStorage.getItem("userRole"), filter : filterString, page : pageNum}})
             .then(response => 
             {
                 this.setState({listItem : [...response.data]});
@@ -64,13 +64,10 @@ export default class AppreciationHistory extends React.Component
                 AlertMessage().showError(error);
             })
 
-            this.hideLoaderButtonRef.current.click();
         }
         else
         {
-            this.openLoaderButtonRef.current.click();
-
-            Api(PLANMEET_SERVICES + "appreciation/load-appreciation-by-user").getApi("",{params: {userCode : localStorage.getItem("userId"), filter : filterString, page : pageNum}})
+            Api(PLANMEET_SERVICES + "appreciation/load-appreciation-by-user").getApi("",{params: {userCode : localStorage.getItem("userId"), role: localStorage.getItem("userRole"), filter : filterString, page : pageNum}})
             .then(response => 
             {
                 this.setState({listItem : [...this.state.listItem, ...response.data]});
@@ -79,9 +76,9 @@ export default class AppreciationHistory extends React.Component
             {
                 AlertMessage().showError(error);
             })
-
-            this.hideLoaderButtonRef.current.click();
         }
+
+        this.hideLoaderButtonRef.current.click();
     }
 
     handleFilterChange(e)
@@ -119,8 +116,8 @@ export default class AppreciationHistory extends React.Component
         return(
         <>
             {/* Loader Manipulation Component */}
-            <Button hidden={true} ref={this.openLoaderButtonRef} onClick={() => this.loaderRef.current.showLoader(true)}>Show Loader</Button>
-            <Button hidden={true} ref={this.hideLoaderButtonRef} onClick={() => this.loaderRef.current.showLoader(false)}>Hide Loader</Button>
+            <Button hidden={true} ref={this.openLoaderButtonRef} onClick={() => this.loaderRef.current.setHidden(false)}>Show Loader</Button>
+            <Button hidden={true} ref={this.hideLoaderButtonRef} onClick={() => this.loaderRef.current.setHidden(true)}>Hide Loader</Button>
             <BackdropLoader ref={this.loaderRef} />
 
             {/* Navigation, Action Button */}
@@ -147,7 +144,7 @@ export default class AppreciationHistory extends React.Component
                             <Card sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', color: '#000000', backgroundColor: '#90caf9'}}>
                                 <Box sx={{display: 'flex', flexDirection: 'column'}}>
                                     <CardContent sx={{flex: '1 0 auto'}}>
-                                        <Typography variant="h6">{item.customerCode}</Typography>
+                                        <Typography variant="h6">{item.customerCode} &nbsp;&nbsp;({item.creatorName})</Typography>
                                         <Typography variant="subtitle1">{moment(item.apprDate,"YYYY-MM-DD").format("DD-MM-YYYY")}</Typography>       
                                         <Typography variant="subtitle2"><em>{item.location}</em></Typography>
                                     </CardContent>
