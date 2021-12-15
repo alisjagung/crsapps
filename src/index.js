@@ -4,7 +4,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import App from './App';
 
-import Planning from './component/modules/planning';
+import Login from './component/modules/login';
+import Planning from './component/modules/planning/planning';
 import Meeting from './component/modules/meeting';
 import Extra from './component/modules/extra';
 
@@ -38,6 +39,7 @@ ReactDOM.render(
             <Route path="extra/appreciation-list" element={<AppreciationHistory />} />
             <Route path="extra/sync" element={<SyncData />} />
             <Route path="extra/upload" element={<UploadData />} />
+            <Route path="login" element={<Login />}  />
             <Route path="extra/logout"  />
             <Route 
               path="*" 

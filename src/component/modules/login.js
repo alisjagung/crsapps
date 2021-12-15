@@ -28,7 +28,7 @@ export default function Login()
     const handleSubmit = () =>
     {
        
-        Api(AUTH_SERVICES + "user-login").postApi({kdUser : username, password : pwd}, {})
+        Api(AUTH_SERVICES + "user-login?apps=crs").postApi({kdUser : username, password : pwd}, {})
         .then(response =>
         {
            if(response.isSuccess)
@@ -64,7 +64,7 @@ export default function Login()
 
                         <form name="loginForm" id="login-form">
                             <div className="input-group mb-3">
-                                <input type="text" className="form-control" placeholder="Username" value={username} onChange={onUsernameChange} required />
+                                <input type="text" className="form-control" placeholder="User Code" value={username} onChange={onUsernameChange} required />
                                 <div className="input-group-append">
                                     <div className="input-group-text">
                                         <FontAwesomeIcon icon={["fas","envelope"]}  />

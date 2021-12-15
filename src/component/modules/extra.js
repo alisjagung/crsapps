@@ -16,7 +16,7 @@ export default function Extra()
         {"id": 4, "icon": ["fas","calendar"], "title": "Appreciation History", "route": "appreciation-list"},
         {"id": 5, "icon": ["fas","sync"], "title": "Synchronize", "route": "sync"},
         {"id": 6, "icon": ["fas","cloud-upload-alt"], "title": "Upload", "route": "upload"},
-        {"id": 7, "icon": ["fas","sign-out-alt"], "title": "Logout", "route": "logout"}
+        //{"id": 7, "icon": ["fas","sign-out-alt"], "title": "Logout", "route": "logout"}
     ]
 
     const navigate = useNavigate();

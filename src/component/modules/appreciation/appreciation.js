@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Link , useParams } from "react-router-dom";
+import { Link , useParams, useNavigate } from "react-router-dom";
 
 import { AppBar, Box, Button, Dialog,
         Grid, IconButton, MenuItem, Typography, Toolbar } from '@mui/material';
 import TextField from '@mui/material/TextField';
-import { PhotoCamera } from '@mui/icons-material';
+import { Email, PhotoCamera } from '@mui/icons-material';
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import DesktopDatePicker from '@mui/lab/DesktopDatePicker';
@@ -19,6 +19,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
+import EmailIcon from '@mui/icons-material/Email';
 
 import moment from 'moment';
 import Resizer from "react-image-file-resizer";
@@ -45,6 +46,7 @@ export default function Appreciation(params)
     const [location, setLocation] = useState('');
     const [pic, setPic] = useState('');
     const [userCode, setUserCode] = useState('');
+    const [userName, setUserName] = useState('');
     const [custCode, setCustCode] = useState('');
     const [custCodeList, setCustCodeList] = useState([]);
     const [dtTime, setDtTime] = useState('');
@@ -53,6 +55,8 @@ export default function Appreciation(params)
     const [imagePreview, setImagePreview] = useState('');
 
     const [helperText, setHelperText] = useState('');
+
+    const navigate = useNavigate();
 
     // Validation
     var valid = true;
@@ -110,6 +114,7 @@ export default function Appreciation(params)
                     setLocation(response.data.location);
                     setPic(response.data.picrole);
                     setUserCode(response.data.userCode);
+                    setUserName(response.data.creatorName);
                     setCustCode(response.data.customerCode);
                     setDtTime(response.data.apprDate);
                     setNotes(response.data.apprInfo);
@@ -134,6 +139,7 @@ export default function Appreciation(params)
             setLocation(localStorage.getItem("location"));
             setPic(localStorage.getItem("userRole"));
             setUserCode(localStorage.getItem("userId"));
+            setUserName(localStorage.getItem("userDisplayName"));
             setCustCode('');
             setDtTime((moment(new Date().now).format("YYYY-MM-DD")));
             setNotes('');
@@ -189,7 +195,7 @@ export default function Appreciation(params)
             ctxText.fillStyle = "black";
 
             var dt = new Date();
-            var wmText = dt.getDate() + "/" + dt.getMonth() + "/" + dt.getFullYear() + " " + localStorage.getItem("location");
+            var wmText = dt.getDate().toString() + "/" + (dt.getMonth() + 1).toString() + "/" + dt.getFullYear().toString() + " " + localStorage.getItem("location");
         
             ctxText.fillText(wmText, 0, file.height - (file.height/80));
             ctxText.restore();
@@ -202,7 +208,7 @@ export default function Appreciation(params)
     const setCompress = (params) =>
     {
         var dt = new Date();
-        var dtString = dt.getDate() + "-" + dt.getMonth() + "-" + dt.getFullYear() + "-" + dt.getHours() + "-" + dt.getMinutes() + "-" + dt.getSeconds() + "-" + dt.getMilliseconds();
+        var dtString = dt.getDate().toString() + "-" + (dt.getMonth() + 1).toString() + "-" + dt.getFullYear().toString() + "-" + dt.getHours().toString() + "-" + dt.getMinutes().toString() + "-" + dt.getSeconds().toString() + "-" + dt.getMilliseconds().toString();
         
         var objFile = new File([params], userCode + "-" + custCode + "-" + dtString + ".jpeg");
         Resizer.imageFileResizer(
@@ -297,11 +303,11 @@ export default function Appreciation(params)
     //Save Data
     const saveAppreciation = () =>
     {
-        openLoaderButtonRef.current.click();  
-
         validateData();
         if(valid)
         {            
+            openLoaderButtonRef.current.click();
+            
             var formData = new FormData();
 
             formData.append("latitude", latitude);
@@ -318,7 +324,12 @@ export default function Appreciation(params)
             Api(PLANMEET_SERVICES + "appreciation/add-appreciation").postApi(formData, {headers: {'Content-Type':'multipart/form-data'}})
             .then(response =>
                 {
+                    console.log(response);
                     AlertMessage().showSuccess(response.data);
+                    if(response.id !== 0 && response.id !== undefined)
+                    {
+                        navigate("/extra/appreciation/" + response.id, {replace : true});
+                    }
                 })
             .then(() => 
                 {
@@ -345,6 +356,22 @@ export default function Appreciation(params)
         }
         
     }
+
+    //resend email
+    const resendEmail = (id) =>
+    {
+        openLoaderButtonRef.current.click(); 
+        Api(PLANMEET_SERVICES + "appreciation/resend-notification?id=" + id).postApi({},{})
+            .then(response =>
+                {
+                    AlertMessage().showSuccess(response.data);
+                })
+            .catch(error =>
+                {
+                    AlertMessage().showError(error.response.data.message);
+                })
+        hideLoaderButtonRef.current.click();
+    }
     
     return(
     // Appreciation Form Data
@@ -361,6 +388,9 @@ export default function Appreciation(params)
         </Button></Link>&nbsp;&nbsp;&nbsp;
         <Button variant="outlined" color="success" startIcon={<SaveIcon />} onClick={saveAppreciation} disabled={id === undefined ? false : true}>
             Save
+        </Button>&nbsp;&nbsp;&nbsp;
+        <Button variant="outlined" startIcon={<EmailIcon />} onClick={() => resendEmail(id)} disabled={id === undefined ? true : false}>
+            Resend Email
         </Button>
         <hr />
 
@@ -387,10 +417,12 @@ export default function Appreciation(params)
                     <MenuItem key="SPV" value="SPV">AM</MenuItem>
                     <MenuItem key="DSM" value="DSM">RM</MenuItem>
                     <MenuItem key="RSM" value="RSM">SM</MenuItem>
+                    <MenuItem key="Audit" value="Audit">Audit</MenuItem>
                 </TextField>
             </Grid>
             <Grid item sm={6}>
-                <TextField label="Name" variant="outlined" helperText={helperText} value={userCode} style={{width:"33ch"}} disabled />
+                <TextField label="UserCode" variant="outlined" helperText={helperText} value={userCode} style={{width:"33ch"}} hidden={true} disabled />
+                <TextField label="Name" variant="outlined" helperText={helperText} value={userName} style={{width:"33ch"}} hidden={true} disabled />
             </Grid>
             <Grid item sm={6}>
                 <TextField label="Customer Code" variant="outlined" helperText={helperText} 
