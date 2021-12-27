@@ -14,7 +14,7 @@ import History from './component/modules/history';
 import Appreciation from './component/modules/appreciation/appreciation';
 import AppreciationHistory from './component/modules/appreciation-history/appreciation-history';
 
-import SyncData from './component/modules/sync-data';
+import SyncData from './component/modules/sync/sync-data';
 import UploadData from './component/modules/upload-data';
 import NotFound from './component/modules/not-found';
 
@@ -25,6 +25,7 @@ import './index.css';
 
 ReactDOM.render(
   //<React.StrictMode>
+    // <BrowserRouter>
     <BrowserRouter basename="/crs-mobile/">
       <Routes>
           <Route path="/" element={<App />}>

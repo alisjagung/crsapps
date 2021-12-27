@@ -3,6 +3,7 @@ import { Link , useParams, useNavigate } from "react-router-dom";
 
 import { AppBar, Box, Button, Dialog,
         Grid, IconButton, MenuItem, Typography, Toolbar } from '@mui/material';
+import LoadingButton from '@mui/lab/LoadingButton';
 import TextField from '@mui/material/TextField';
 import { Email, PhotoCamera } from '@mui/icons-material';
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
@@ -40,6 +41,7 @@ export default function Appreciation(params)
     const loaderRef = useRef(null);
 
     const [showCustCodeDialog, setShowCustCodeDialog] = useState(false);  
+    const [loading, setLoading] = useState(false);  
 
     const [latitude, setLatitude] = useState('');
     const [longitude, setLongitude] = useState('');
@@ -88,8 +90,9 @@ export default function Appreciation(params)
         },
         onSearchChange : (searchText) =>
         {
-            Api(MASTER_SERVICES + "dokter/load-dokter").getApi("",{params: {startDataIndex : 0, perPage : 10, filterBy : searchText, orderBy : 'KdDokter', orderByDirection : 'asc'}})
-            .then(response =>
+            //Api(MASTER_SERVICES + "dokter/load-dokter").getApi("",{params: {startDataIndex : 0, perPage : 10, filterBy : searchText, orderBy : 'KdDokter', orderByDirection : 'asc'}})
+            Api(MASTER_SERVICES + "dokter/load-dokter-by-ref").getApi("",{params: {refCode : localStorage.getItem("userRef"), startDataIndex : 0, perPage : 10, filterBy : searchText, orderBy : 'kdReference', orderByDirection : 'asc'}})
+                .then(response =>
             {
                 setCustCodeList(response.data);
             })
@@ -109,23 +112,31 @@ export default function Appreciation(params)
             Api(PLANMEET_SERVICES + "appreciation/load-appreciation-by-id").getApi("",{params: {id : id}})
             .then(response =>
                 {
-                    setLatitude(response.data.latitude);
-                    setLongitude(response.data.longitude);
-                    setLocation(response.data.location);
-                    setPic(response.data.picrole);
-                    setUserCode(response.data.userCode);
-                    setUserName(response.data.creatorName);
-                    setCustCode(response.data.customerCode);
-                    setDtTime(response.data.apprDate);
-                    setNotes(response.data.apprInfo);
-                    setImageFile(response.data.file);
-                    setImagePreview(response.data.fileBase64);              
-                    setHelperText('');     
+                    if(response.data !== undefined)
+                    {
+                        setLatitude(response.data.latitude);
+                        setLongitude(response.data.longitude);
+                        setLocation(response.data.location);
+                        setPic(response.data.picrole);
+                        setUserCode(response.data.userCode);
+                        setUserName(response.data.creatorName);
+                        setCustCode(response.data.customerCode);
+                        setDtTime(response.data.apprDate);
+                        setNotes(response.data.apprInfo);
+                        setImageFile(response.data.file);
+                        setImagePreview(response.data.fileBase64);              
+                        setHelperText('');     
+                    }
+                    else
+                    {
+                        AlertMessage().showError(response.message);
+                    }
                     hideLoaderButtonRef.current.click();
                 })
             .catch(error =>
                 {
-                    AlertMessage().showError(error);
+                    console.log(error);
+                    AlertMessage().showError(error.message);
                 })   
 
                 hideLoaderButtonRef.current.click();
@@ -147,7 +158,8 @@ export default function Appreciation(params)
             setImagePreview('');
             setHelperText('*Mandatory Field');
 
-            Api(MASTER_SERVICES + "dokter/load-dokter").getApi("",{params: {startDataIndex : 0, perPage : 10, filterBy : '', orderBy : 'KdDokter', orderByDirection : 'asc'}})
+            //Api(MASTER_SERVICES + "dokter/load-dokter").getApi("",{params: {startDataIndex : 0, perPage : 10, filterBy : '', orderBy : 'KdDokter', orderByDirection : 'asc'}})
+            Api(MASTER_SERVICES + "dokter/load-dokter-by-ref").getApi("",{params: {refCode : localStorage.getItem("userRef"), startDataIndex : 0, perPage : 10, filterBy : '', orderBy : 'kdReference', orderByDirection : 'asc'}})
             .then(response =>
             {
                 setCustCodeList(response.data);
@@ -305,9 +317,10 @@ export default function Appreciation(params)
     {
         validateData();
         if(valid)
-        {            
+        {        
+            setLoading(true);    
             openLoaderButtonRef.current.click();
-            
+
             var formData = new FormData();
 
             formData.append("latitude", latitude);
@@ -353,6 +366,7 @@ export default function Appreciation(params)
                     setImagePreview(URL.createObjectURL(imageFile));
                     hideLoaderButtonRef.current.click();
                 })
+                setLoading(false);  
         }
         
     }
@@ -360,6 +374,7 @@ export default function Appreciation(params)
     //resend email
     const resendEmail = (id) =>
     {
+        console.log(openLoaderButtonRef.current);
         openLoaderButtonRef.current.click(); 
         Api(PLANMEET_SERVICES + "appreciation/resend-notification?id=" + id).postApi({},{})
             .then(response =>
@@ -368,7 +383,7 @@ export default function Appreciation(params)
                 })
             .catch(error =>
                 {
-                    AlertMessage().showError(error.response.data.message);
+                    AlertMessage().showError(error.message);
                 })
         hideLoaderButtonRef.current.click();
     }
@@ -386,9 +401,24 @@ export default function Appreciation(params)
         <Link to="/extra"><Button variant="outlined" startIcon={<ArrowBackIcon />}>
             Back
         </Button></Link>&nbsp;&nbsp;&nbsp;
+
         <Button variant="outlined" color="success" startIcon={<SaveIcon />} onClick={saveAppreciation} disabled={id === undefined ? false : true}>
             Save
         </Button>&nbsp;&nbsp;&nbsp;
+
+        {/* <LoadingButton
+            color="success"
+            onClick={saveAppreciation}
+            loading={loading}
+            loadingPosition="start"
+            startIcon={<SaveIcon />}
+            variant="outlined"
+            disabled={id === undefined ? false : true}
+        >
+            Save
+         </LoadingButton> */}
+        
+        
         <Button variant="outlined" startIcon={<EmailIcon />} onClick={() => resendEmail(id)} disabled={id === undefined ? true : false}>
             Resend Email
         </Button>

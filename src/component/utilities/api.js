@@ -54,6 +54,4 @@ export const Api = url =>
         postApi : (data, config) => postData(data, config)
     }
 
-    
-    
 }

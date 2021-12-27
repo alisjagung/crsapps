@@ -19,6 +19,9 @@
     "@testing-library/user-event": "^12.8.3",
     "axios": "^0.24.0",
     "date-fns": "^2.25.0",
+    "dotenv": "^10.0.0",
+    "env-cmd": "^10.1.0",
+    "idb": "^7.0.0",
     "jsdom": "^18.1.0",
     "moment": "^2.29.1",
     "mui-datatables": "^4.0.0",
@@ -29,6 +32,7 @@
     "react-scripts": "4.0.3",
     "react-tabs": "^3.2.3",
     "react-toastify": "^8.1.0",
+    "safari-14-idb-fix": "^3.0.0",
     "watermarkjs": "^2.1.1",
     "web-vitals": "^0.2.4",
     "workbox-background-sync": "^5.1.4",
@@ -45,8 +49,10 @@
     "workbox-streams": "^5.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start:dev": "env-cmd -f .env.development react-scripts start",
+    "start:prod": "env-cmd -f .env.production react-scripts start",
+    "build:dev": "env-cmd -f .env.development react-scripts build",
+    "build:prod": "env-cmd -f .env.production react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

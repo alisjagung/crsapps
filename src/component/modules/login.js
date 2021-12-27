@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Logo from '../../img/logo-fahrenheit-putih.png';
 import '../../css/custom.css';
 
+import { ToastContainer } from 'react-toastify';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { Api }  from '../utilities/api';
@@ -34,6 +35,7 @@ export default function Login()
            if(response.isSuccess)
            {
             localStorage.setItem("userId", response.data.kdUser);
+            localStorage.setItem("userRef", response.data.kdReference);
             localStorage.setItem("userDisplayName", response.data.nameUser);
             localStorage.setItem("userRole", response.data.role);
             //navigate("/planning", {replace : true});
@@ -47,7 +49,8 @@ export default function Login()
         })
         .catch(error =>
         {
-            AlertMessage().showError(error);
+            console.log("masuk catch");
+            AlertMessage().showError(error.message);
         });   
     }
     
@@ -89,6 +92,7 @@ export default function Login()
                 </div>
             </div>        
         </div>
+        <ToastContainer />
     </div>
     );
 }

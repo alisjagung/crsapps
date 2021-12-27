@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { AppBar, Box, Button, Checkbox, Card, CardActions, CardContent, Dialog, Divider,
-    Grid, IconButton, InputAdornment, List, ListItem, MenuItem, Typography, Toolbar, TextField } from '@mui/material';
+import { AppBar, Box, Button, Checkbox, Card, CardContent, Dialog, Divider,
+    IconButton, InputAdornment, List, ListItem, Typography, Toolbar, TextField } from '@mui/material';
+
+import moment from 'moment';
+import idbReady from 'safari-14-idb-fix';
 
 import Fab from '@mui/material/Fab';
 import AddIcon from '@mui/icons-material/Add';
@@ -40,15 +43,43 @@ export default function Planning()
     {
         var strFilter = filter === "" || filter === undefined ? '' : filter;
 
-        Api(MASTER_SERVICES + "dokter/load-dokter").getApi("",{params: {startDataIndex : 0, perPage : 10, filterBy : strFilter, orderBy : 'KdDokter', orderByDirection : 'asc'}})
-            .then(response =>
+        const openRequest = indexedDB.open("CRSDB", 1);
+        openRequest.onsuccess = function()
+        {
+            const openIdb = openRequest.result;
+            try
             {
-                setCustCodeList(response.data);
-            })
-            .catch(error =>
+                const tx = openIdb.transaction("doctor", "readwrite");
+                const store = tx.objectStore("doctor");
+            
+                var reqData = store.getAll();
+                reqData.onsuccess = function()
+                {
+                    setCustCodeList(reqData.result);    
+                }
+            }
+            catch(err)
             {
-                AlertMessage().showError(error);
-            });   
+                console.log(err);
+                AlertMessage().showError(err.toString());
+            }
+        }
+
+        openRequest.onerror = function()
+        {
+            AlertMessage().showError(openRequest.error.toString());
+        }
+
+
+        // Api(MASTER_SERVICES + "dokter/load-dokter").getApi("",{params: {startDataIndex : 0, perPage : 10, filterBy : strFilter, orderBy : 'KdDokter', orderByDirection : 'asc'}})
+        //     .then(response =>
+        //     {
+        //         setCustCodeList(response.data);
+        //     })
+        //     .catch(error =>
+        //     {
+        //         AlertMessage().showError(error);
+        //     });   
     }
 
      //Toggle Open Dialog
@@ -64,26 +95,21 @@ export default function Planning()
     }
 
     //Set Filter
-    const onFilterChange = (e) =>
-    {
-        setFilter(e.target.values);
-    }
-
-    //Search Customer Data
-    const handleSearch = () =>
-    {
-        
-    }
+    // const onFilterChange = (e) =>
+    // {
+    //     setFilter(e.target.values);
+    // }
 
     //Map Customer Object Data to Customed Object (Add Status and Planning Code)
     const mapCustomedItem = (item) =>
     {
         var customedItem = {};
         customedItem.kdDokter = item.kdDokter;
-        customedItem.namaDokter = item.namaDokter;
+        customedItem.doctorName = item.doctorName;
         customedItem.spes = item.spes;
         customedItem.alamat = item.alamat;
         customedItem.status = "Preparation";
+        customedItem.createdDate = moment(new Date()).add(-1,'days').format("YYYY-MM-DD");
 
         var date = new Date();
         var dt = date.getDate().toString();
@@ -119,6 +145,7 @@ export default function Planning()
             if(currentIndex === -1)
             {
                 tempChecked.push(mapCustomedItem(item));
+                addData(mapCustomedItem(item));
             }
             else
             {
@@ -126,27 +153,135 @@ export default function Planning()
             }
 
             setCustSelected(tempChecked);
+            
         }
 
         console.log(custSelected);
+    }
+
+    //Add Planning to IDb
+    const addData = (dataItem) =>
+    {
+        idbReady()
+        .then(response =>
+        {
+            console.log(response);
+            const openRequest = indexedDB.open("CRSDB", 1);
+            openRequest.onsuccess = function()
+            {
+                try
+                {
+                    const openIdb = openRequest.result;
+                    const tx = openIdb.transaction('planning', 'readwrite');
+                    const store = tx.objectStore('planning');
+                
+                    //add new data
+                    const addData = store.add(dataItem);
+                    addData.onerror = function(event)
+                    {
+                       var errMessage = event.target.error.name.toString + " : " + event.target.error.message.toString();
+                       AlertMessage().showError(errMessage);
+                    }
+                }
+                catch(err)
+                {
+                    AlertMessage().showError(err.toString());
+                }
+            }
+        })
+        .catch(err =>
+        {
+            AlertMessage().showError(err.toString());
+        });
     }
 
     //Finalize Planning
     const onFinalize = () =>
     {
         var currentUserRole = localStorage.getItem("userRole");
-        if(currentUserRole == "MR" || currentUserRole == "SPV")
+        if(currentUserRole === "MR" || currentUserRole === "SPV")
         {
-            if(custSelected.length < 5)
+            if(custSelected.length < 6)
             {
                 AlertMessage().showError("Please Fulfill Minimum Quota of Visit Plan (6 Customer)");
             }
         }
     }
 
+    //Delete Expired Planning (H + 1, Status : Preparation)
+    const onDeleteExpiredPlanning = () =>
+    {
+        //delete from state, if any
+        var dataArr = custSelected.filter(item => item.status == "preparation");
+        var today = moment(new Date()).format("YYYY-MM-DD");
+        console.log("today : " + today);
+        var expiredIndex = dataArr.filter(function(item, index, arr)
+        {
+            var dateDiff = moment(today).subtract(item.createdDate, 'days');
+            if (dateDiff > 0)
+            {
+                return index;
+            }
+        });
+        console.log(expiredIndex);
+
+        if(expiredIndex.length > 0)
+        {
+            expiredIndex.map(function(item, index, arr)
+            {
+                custSelected.splice(item,1);
+            })
+        }
+        
+        //delete from indexed db, if any
+        idbReady()
+        .then(response =>
+        {
+            const openRequest = indexedDB.open("CRSDB", 1);
+            openRequest.onsuccess = function()
+            {
+                try
+                {
+                    const openIdb = openRequest.result;
+                    const tx = openIdb.transaction('planning', 'readwrite');
+                    const store = tx.objectStore('planning');
+                    const storeIndex = store.index('dateIndex');
+
+                    //delete expired data
+                    var yday = moment(new Date()).add(-1, 'days').format("YYYY-MM-DD");
+                    const delRequest = storeIndex.getAllKeys(IDBKeyRange.upperBound(yday));
+                    console.log(delRequest);
+                    delRequest.onsuccess = function()
+                    {
+                        if(delRequest.result !== undefined && delRequest.length > 0)
+                        {
+                            var delArr = delRequest.result;
+                            delArr.map(item => store.delete(item));
+                        }
+                    }
+
+                    delRequest.onerror = function(event)
+                    {
+                        AlertMessage().showError(event.error.toString());
+                    }
+                
+                }
+                catch(err)
+                {
+                    AlertMessage().showError(err.toString());
+                }
+            }
+        })
+        .catch(err =>
+        {
+            AlertMessage().showError(err.toString());
+        });
+    }
+
     useEffect(() => 
     {
         loadDoctor('');
+        onDeleteExpiredPlanning();
     }, []);
 
     useEffect(() => 
@@ -161,6 +296,12 @@ export default function Planning()
                 <AddIcon />
             </Fab>
 
+            {/* Hidden Button to Remove Yesterday's Planning */}
+            {/* <Button variant="outlined" color="primary" onClick={onDeleteExpiredPlanning}>
+                Delete
+            </Button> */}
+
+            {/* Finalize Planning (Update Status) */}
             <Button variant="outlined" color="success" startIcon={<PlaylistAddCheckIcon />} onClick={onFinalize} disabled={custSelected.length !== 0 ? false : true}>
                 Finalize
             </Button>
@@ -178,7 +319,7 @@ export default function Planning()
                                     <Box sx={{display: 'flex', flexDirection: 'column', width: '100%'}}>
                                         <CardContent sx={{flex: '1 0 auto'}}>
                                             <Typography variant="body2">{item.planningCode}</Typography>
-                                            <Typography variant="h6"><strong>{item.kdDokter} - {item.namaDokter}</strong></Typography>
+                                            <Typography variant="h6"><strong>{item.kdDokter} - {item.doctorName}</strong></Typography>
                                             <Typography variant="body1">{item.spes}</Typography> 
                                             <br/>      
                                             <Typography variant="body2"><em>{item.alamat}</em></Typography>
@@ -215,7 +356,7 @@ export default function Planning()
                             value={filter} onChange={(e) => setFilter(e.target.value)} 
                             InputProps={{endAdornment: 
                                 <InputAdornment position="end">
-                                    <IconButton onClick={handleSearch}><SearchIcon />
+                                    <IconButton><SearchIcon />
                                     </IconButton>
                                 </InputAdornment>}}
                     />   
@@ -239,7 +380,7 @@ export default function Planning()
                                 <Card elevation={0} sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', color: '#1976d2', shadows: 'none !important'}}>
                                     <Box sx={{display: 'flex', flexDirection: 'column'}}>
                                         <CardContent sx={{flex: '1 0 auto'}}>
-                                            <Typography variant="h6"><strong>{item.kdDokter} - {item.namaDokter}</strong></Typography>
+                                            <Typography variant="h6"><strong>{item.kdDokter} - {item.doctorName}</strong></Typography>
                                             <Typography variant="body1">{item.spes}</Typography> 
                                             <br/>      
                                             <Typography variant="body2"><em>{item.alamat}</em></Typography>

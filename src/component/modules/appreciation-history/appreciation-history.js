@@ -107,7 +107,11 @@ export default class AppreciationHistory extends React.Component
     componentDidMount()
     {
         window.addEventListener('scroll', this.infiniteScroll);
+        this.openLoaderButtonRef.current.click();
+
         this.loadData(this.state.page, this.state.filter);
+
+        this.hideLoaderButtonRef.current.click();
     }
 
         
