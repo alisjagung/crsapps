@@ -3,9 +3,10 @@ import { Link , useParams, useNavigate } from "react-router-dom";
 
 import { AppBar, Box, Button, Dialog,
         Grid, IconButton, MenuItem, Typography, Toolbar } from '@mui/material';
-import LoadingButton from '@mui/lab/LoadingButton';
+        
+import Fab from '@mui/material/Fab';
 import TextField from '@mui/material/TextField';
-import { Email, PhotoCamera } from '@mui/icons-material';
+import { PhotoCamera } from '@mui/icons-material';
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import DesktopDatePicker from '@mui/lab/DesktopDatePicker';
@@ -21,6 +22,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 import EmailIcon from '@mui/icons-material/Email';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 import moment from 'moment';
 import Resizer from "react-image-file-resizer";
@@ -28,8 +30,6 @@ import watermarkjs from 'watermarkjs';
 
 import { Api }  from '../../utilities/api';
 import BackdropLoader  from '../../utilities/backdrop-loader';
-import { PLANMEET_SERVICES } from '../../../config/config';
-import { MASTER_SERVICES } from '../../../config/config';
 import AlertMessage from '../../utilities/alert-message';
 
 import './custom.css';
@@ -41,7 +41,6 @@ export default function Appreciation(params)
     const loaderRef = useRef(null);
 
     const [showCustCodeDialog, setShowCustCodeDialog] = useState(false);  
-    const [loading, setLoading] = useState(false);  
 
     const [latitude, setLatitude] = useState('');
     const [longitude, setLongitude] = useState('');
@@ -59,6 +58,17 @@ export default function Appreciation(params)
     const [helperText, setHelperText] = useState('');
 
     const navigate = useNavigate();
+
+    //Set Fab location
+    const fabStyle = {
+        margin: 0,
+        top: 'auto',
+        right: 20,
+        bottom: 20,
+        left: 'auto',
+        position: 'fixed',
+        zIndex: 1234 
+    };
 
     // Validation
     var valid = true;
@@ -91,7 +101,7 @@ export default function Appreciation(params)
         onSearchChange : (searchText) =>
         {
             //Api(MASTER_SERVICES + "dokter/load-dokter").getApi("",{params: {startDataIndex : 0, perPage : 10, filterBy : searchText, orderBy : 'KdDokter', orderByDirection : 'asc'}})
-            Api(MASTER_SERVICES + "dokter/load-dokter-by-ref").getApi("",{params: {refCode : localStorage.getItem("userRef"), startDataIndex : 0, perPage : 10, filterBy : searchText, orderBy : 'kdReference', orderByDirection : 'asc'}})
+            Api(process.env.REACT_APP_MASTER_SERVICES + "dokter/load-dokter-by-ref").getApi("",{params: {refCode : localStorage.getItem("userRef"), startDataIndex : 0, perPage : 10, filterBy : searchText, orderBy : 'kdReference', orderByDirection : 'asc'}})
                 .then(response =>
             {
                 setCustCodeList(response.data);
@@ -109,7 +119,7 @@ export default function Appreciation(params)
         {
             openLoaderButtonRef.current.click();
 
-            Api(PLANMEET_SERVICES + "appreciation/load-appreciation-by-id").getApi("",{params: {id : id}})
+            Api(process.env.REACT_APP_PLANMEET_SERVICES + "appreciation/load-appreciation-by-id").getApi("",{params: {id : id}})
             .then(response =>
                 {
                     if(response.data !== undefined)
@@ -135,7 +145,6 @@ export default function Appreciation(params)
                 })
             .catch(error =>
                 {
-                    console.log(error);
                     AlertMessage().showError(error.message);
                 })   
 
@@ -145,9 +154,39 @@ export default function Appreciation(params)
         {
             openLoaderButtonRef.current.click();
             
-            setLatitude(localStorage.getItem("lat"));
-            setLongitude(localStorage.getItem("long"));
-            setLocation(localStorage.getItem("location"));
+            if(!checkLocation())
+            {
+                AlertMessage().showError("Location Undefined : Please Logout, Enable Location on Your Device, and Login Again");
+            }
+
+            navigator.geolocation.getCurrentPosition(function(pos) 
+            {
+                setLatitude(pos.coords.latitude);
+                setLongitude(pos.coords.longitude);
+                
+                var tm = new Date().getUTCHours() + 7;
+                if(tm > 24)
+                {
+                  tm -= 24;
+                }
+          
+                if(tm >= 6 && tm < 18)
+                {
+                  Api(process.env.REACT_APP_MASTER_SERVICES + "location/load-he-location").getApi("",{params :{latitude: pos.coords.latitude, longitude: pos.coords.longitude}})
+                  .then(response => setLocation(response.data.items[0].title))
+                  .catch(error => AlertMessage().showError(error))
+                }
+                
+                if(tm >= 18 && tm < 6)
+                {
+                  Api(process.env.REACT_APP_MASTER_SERVICES + "location/load-ga-location").getApi("",{params :{latitude: pos.coords.latitude, longitude: pos.coords.longitude}})
+                  .then(response => setLocation(response.data.features[0].properties.formatted))
+                  .catch(error => AlertMessage().showError(error))
+                }                
+
+            });
+            
+            //setLocation(localStorage.getItem("location"));
             setPic(localStorage.getItem("userRole"));
             setUserCode(localStorage.getItem("userId"));
             setUserName(localStorage.getItem("userDisplayName"));
@@ -159,7 +198,7 @@ export default function Appreciation(params)
             setHelperText('*Mandatory Field');
 
             //Api(MASTER_SERVICES + "dokter/load-dokter").getApi("",{params: {startDataIndex : 0, perPage : 10, filterBy : '', orderBy : 'KdDokter', orderByDirection : 'asc'}})
-            Api(MASTER_SERVICES + "dokter/load-dokter-by-ref").getApi("",{params: {refCode : localStorage.getItem("userRef"), startDataIndex : 0, perPage : 10, filterBy : '', orderBy : 'kdReference', orderByDirection : 'asc'}})
+            Api(process.env.REACT_APP_MASTER_SERVICES + "dokter/load-dokter-by-ref").getApi("",{params: {refCode : localStorage.getItem("userRef"), startDataIndex : 0, perPage : 10, filterBy : '', orderBy : 'kdReference', orderByDirection : 'asc'}})
             .then(response =>
             {
                 setCustCodeList(response.data);
@@ -173,6 +212,18 @@ export default function Appreciation(params)
         }
     }, []);
 
+    //Check if Location = null
+    const checkLocation = () =>
+    {
+        var locationValid = true;
+        
+        if(localStorage.getItem("location") === "" || localStorage.getItem("location") === null || localStorage.getItem("location") === undefined)
+        {
+            locationValid = false;
+        }
+
+        return locationValid;
+    }
 
     //Change Datetime
     const onDtChange = (newValue) =>
@@ -194,7 +245,6 @@ export default function Appreciation(params)
         .blob(function(file) 
         {
             var ctxRect = file.getContext('2d');
-            console.log("width:" + file.width + "; height:" + file.height);
             ctxRect.save();
             ctxRect.fillStyle = "yellow";
             ctxRect.fillRect(0, file.height - (file.height/40), file.width, file.height - (file.height/20));
@@ -203,7 +253,6 @@ export default function Appreciation(params)
             var ctxText = file.getContext('2d');
             ctxText.save();
             ctxText.font = getFontSize(file.width);
-            console.log(ctxText.font);
             ctxText.fillStyle = "black";
 
             var dt = new Date();
@@ -283,6 +332,15 @@ export default function Appreciation(params)
     //Validate Data
     const validateData = () =>
     {
+        var valid = true;
+
+        if(checkLocation() === false)
+        {
+            valid = false;
+            AlertMessage().showError("Location Undefined : Please Logout, Enable Location on Your Device, and Login Again");
+            return;
+        }
+
         if(pic === "" || pic === undefined)
         {
             valid = false;
@@ -318,7 +376,6 @@ export default function Appreciation(params)
         validateData();
         if(valid)
         {        
-            setLoading(true);    
             openLoaderButtonRef.current.click();
 
             var formData = new FormData();
@@ -334,10 +391,9 @@ export default function Appreciation(params)
             formData.append("apprInfo", notes);
             formData.append("file", imageFile);
 
-            Api(PLANMEET_SERVICES + "appreciation/add-appreciation").postApi(formData, {headers: {'Content-Type':'multipart/form-data'}})
+            Api(process.env.REACT_APP_PLANMEET_SERVICES + "appreciation/add-appreciation").postApi(formData, {headers: {'Content-Type':'multipart/form-data'}})
             .then(response =>
                 {
-                    console.log(response);
                     AlertMessage().showSuccess(response.data);
                     if(response.id !== 0 && response.id !== undefined)
                     {
@@ -350,7 +406,6 @@ export default function Appreciation(params)
                 })
             .catch(error =>
                 {
-                    //console.log(error.response.data);
                     AlertMessage().showError(error.response.data.message);
 
                     setLatitude(latitude);
@@ -366,7 +421,6 @@ export default function Appreciation(params)
                     setImagePreview(URL.createObjectURL(imageFile));
                     hideLoaderButtonRef.current.click();
                 })
-                setLoading(false);  
         }
         
     }
@@ -374,9 +428,8 @@ export default function Appreciation(params)
     //resend email
     const resendEmail = (id) =>
     {
-        console.log(openLoaderButtonRef.current);
         openLoaderButtonRef.current.click(); 
-        Api(PLANMEET_SERVICES + "appreciation/resend-notification?id=" + id).postApi({},{})
+        Api(process.env.REACT_APP_PLANMEET_SERVICES + "appreciation/resend-notification?id=" + id).postApi({},{})
             .then(response =>
                 {
                     AlertMessage().showSuccess(response.data);
@@ -387,10 +440,20 @@ export default function Appreciation(params)
                 })
         hideLoaderButtonRef.current.click();
     }
+
+    //go to up
+    const onButtonUpClick = () =>
+    {
+        window.scrollTo(0, 0);
+    }
     
     return(
     // Appreciation Form Data
     <div className="appr">
+        {/* Go to Up Button */}
+        <Fab size="medium" color="primary" aria-label="up" style={fabStyle} onClick={onButtonUpClick}>
+            <KeyboardArrowUpIcon />
+        </Fab>
 
         {/* Loader Manipulation Component */}
         <Button hidden={true} ref={openLoaderButtonRef} onClick={() => loaderRef.current.setHidden(false)}>Show Loader</Button>
@@ -398,11 +461,11 @@ export default function Appreciation(params)
         <BackdropLoader ref={loaderRef} />
 
         {/* Navigation, Action Button */}
-        <Link to="/extra"><Button variant="outlined" startIcon={<ArrowBackIcon />}>
+        <Link to="/extra"><Button variant="contained" startIcon={<ArrowBackIcon />}>
             Back
         </Button></Link>&nbsp;&nbsp;&nbsp;
 
-        <Button variant="outlined" color="success" startIcon={<SaveIcon />} onClick={saveAppreciation} disabled={id === undefined ? false : true}>
+        <Button variant="contained" color="success" startIcon={<SaveIcon />} onClick={saveAppreciation} disabled={id === undefined ? false : true}>
             Save
         </Button>&nbsp;&nbsp;&nbsp;
 
@@ -419,13 +482,13 @@ export default function Appreciation(params)
          </LoadingButton> */}
         
         
-        <Button variant="outlined" startIcon={<EmailIcon />} onClick={() => resendEmail(id)} disabled={id === undefined ? true : false}>
+        <Button variant="contained" startIcon={<EmailIcon />} onClick={() => resendEmail(id)} disabled={id === undefined ? true : false}>
             Resend Email
         </Button>
         <hr />
 
         {/* Title */}
-       <Typography variant="h6">APPRECIATION</Typography>
+       <Typography variant="h5">APPRECIATION</Typography>
        <br/>
 
        {/* Form Data */}
@@ -494,17 +557,17 @@ export default function Appreciation(params)
                 capture="environment"
                 onChange={onImageChange}
                 style={{visibility:"hidden"}}
-                disabled={id === undefined ? false : true}
+                disabled={id === undefined ? (checkLocation() ? false : true) : true}
             />
             </Grid>
             <Grid item sm={12}>
                 <label htmlFor="icon-button-file">       
-                    <Button variant="contained" component="span" startIcon={<PhotoCamera />} disabled={id === undefined ? false : true}>
+                    <Button variant="contained" component="span" startIcon={<PhotoCamera />} disabled={id === undefined ? (checkLocation() ? false : true) : true}>
                         Take Photo
                     </Button> 
                 </label>
             </Grid>
-            <Grid item sm={12}>
+            <Grid item sm={12} hidden={imagePreview === undefined || imagePreview === "" || imagePreview === null ? true : false}>
                 <label>Photo Preview</label>
                 <Box>
                     <img src={imagePreview} alt="preview" />

@@ -41,7 +41,6 @@ export default class CustomListItem extends React.Component
 
     handleSearch()
     {
-        console.log(this.state.kword);
         if(this.state.kword !== "" && this.state.kword !== undefined)
         {
             var allItemArr = this.props.listItem;

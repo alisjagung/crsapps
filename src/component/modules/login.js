@@ -7,7 +7,6 @@ import { ToastContainer } from 'react-toastify';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import { Api }  from '../utilities/api';
-import { AUTH_SERVICES } from '../../config/config';
 import AlertMessage from '../utilities/alert-message';
 
 export default function Login()
@@ -15,6 +14,11 @@ export default function Login()
     const [username, setUsername] = useState('');
     const [pwd, setPwd] = useState('');
     //const navigate = useNavigate();
+
+    const browserWidth = window.innerWidth;
+    const browserHeight = window.innerHeight;
+
+    console.log(browserWidth + " " + browserHeight);
 
     const onUsernameChange = (e) =>
     {
@@ -27,9 +31,8 @@ export default function Login()
     }
 
     const handleSubmit = () =>
-    {
-       
-        Api(AUTH_SERVICES + "user-login?apps=crs").postApi({kdUser : username, password : pwd}, {})
+    {  
+        Api(process.env.REACT_APP_AUTH_SERVICES + "user-login?apps=crs").postApi({kdUser : username, password : pwd}, {})
         .then(response =>
         {
            if(response.isSuccess)
@@ -49,7 +52,6 @@ export default function Login()
         })
         .catch(error =>
         {
-            console.log("masuk catch");
             AlertMessage().showError(error.message);
         });   
     }
@@ -85,13 +87,26 @@ export default function Login()
                             <div className="row">
                                 <div className="col-12">
                                     <button type="button" className="btn btn-light btn-block" onClick={handleSubmit}>Sign In</button>
+                                    {/* <a className="btn btn-light btn-block" href='#faceid-login'>Next</a> */}
                                 </div>
                             </div>
+                            {/* <br/>
+                            <div className="row">
+                                <a style={{color: "#FFFFFF", textDecoration: "underline", textAlign: "center"}}>Register New Face ID</a>
+                            </div> */}
                         </form>
                     </div>
                 </div>
             </div>        
         </div>
+        {/* <div id='faceid-login' style={{backgroundColor:"#085596", width : browserWidth, height : browserHeight}}>
+            <p style={{color: "#FFFFFF"}}>Face ID Login Here</p>
+            <div className='row'>
+                <div className='col-12'>
+                    <button type="button" className="btn btn-light btn-block">Sign In</button>                    
+                </div>
+            </div>
+        </div> */}
         <ToastContainer />
     </div>
     );

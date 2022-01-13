@@ -3,13 +3,12 @@ import { Link } from "react-router-dom";
 
 import idbReady from 'safari-14-idb-fix';
 
-import {Button, Typography } from '@mui/material';
+import { Button, Box, Card, CardContent, Typography } from '@mui/material';
 import { ToastContainer } from 'react-toastify';
 
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 import { Api }  from '../../utilities/api';
-import { MASTER_SERVICES } from '../../../config/config';
 import AlertMessage from '../../utilities/alert-message';
 
 export default function SyncData()
@@ -34,7 +33,7 @@ export default function SyncData()
                     const clearIdb =  store.clear();
                     clearIdb.onsuccess = function()
                     {
-                        setInterval(setDeleteProgress("Delete Current Data Completed"), 5000);
+                        setInterval(setDeleteProgress("Completed"), 5000);
         
                         //add new data
                         const addIdb = data.map(function(item, index, arr) 
@@ -51,7 +50,7 @@ export default function SyncData()
         
                     tx.oncomplete = function()
                     {
-                        setInterval(setInsertProgress("Insert New Data Completed"), 5000);
+                        setInterval(setInsertProgress("Completed"), 5000);
                     }
                 }
                 catch(err)
@@ -70,43 +69,67 @@ export default function SyncData()
 
     useEffect(()=>
     {        
-        Api(MASTER_SERVICES + "dokter/load-dokter-by-ref").getApi("",{params: {refCode : localStorage.getItem("userRef"), startDataIndex : 0, perPage : 50000, filterBy : '', orderBy : 'kdReference', orderByDirection : 'asc'}})
-        .then(response =>
-        {
-            if(response.isSuccess)
-            {
-                updateIDb(response.data);
-            }
-            else
-            {
-                AlertMessage().showError(response.message);
-            }
+        // Api(process.env.REACT_APP_MASTER_SERVICES + "dokter/load-dokter-by-ref").getApi("",{params: {refCode : localStorage.getItem("userRef"), startDataIndex : 0, perPage : 50000, filterBy : '', orderBy : 'kdReference', orderByDirection : 'asc'}})
+        // .then(response =>
+        // {
+        //     if(response.isSuccess)
+        //     {
+        //         updateIDb(response.data);
+        //     }
+        //     else
+        //     {
+        //         AlertMessage().showError(response.message);
+        //     }
             
-        })
-        .catch(error =>
-        {
-            AlertMessage().showError(error.message);
-        });   
+        // })
+        // .catch(error =>
+        // {
+        //     AlertMessage().showError(error.message);
+        // });   
         
     },[]);
 
     return(
         <>
             {/* Navigation, Action Button */}
-            <Link to="/extra"><Button variant="outlined" startIcon={<ArrowBackIcon />}>
+            <Link to="/extra"><Button variant="contained" startIcon={<ArrowBackIcon />}>
                 Back
             </Button></Link>&nbsp;&nbsp;&nbsp;
             <hr />
 
             {/* Title */}
-            <Typography variant="h6">SYNCHRONIZE</Typography>
+            <Typography variant="h5">SYNCHRONIZE</Typography>
             <br/>
 
-            <Typography variant="body1">Doctor Data</Typography>
+            <Typography variant="h6">Doctor Data</Typography>
             <br />
-            <p>Delete Current Record Data on Indexed DB : {deleteProgress}</p>
+
+            {/* <Card sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', color: '#000000', backgroundColor: '#bbdefb'}}>
+                <Box sx={{display: 'flex', flexDirection: 'column'}}>
+                    <CardContent sx={{flex: '1 0 auto'}}>
+                        <Typography variant="h6">Delete Current Record Data</Typography>
+                    </CardContent>
+                </Box>
+                <Box sx={{display: 'flex', flexDirection: 'column'}}>
+                    <CardContent sx={{flex: '1 0 auto'}}>
+                        <Typography variant="h6" color="#FF0000"><strong>{deleteProgress}</strong></Typography>     
+                    </CardContent>
+                </Box>
+            </Card>
             <br />
-            <p>Insert New Record Data on Indexed DB : {insertProgress}</p>
+
+            <Card sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', color: '#000000', backgroundColor: '#bbdefb'}}>
+                <Box sx={{display: 'flex', flexDirection: 'column'}}>
+                    <CardContent sx={{flex: '1 0 auto'}}>
+                        <Typography variant="h6">Insert New Record Data</Typography>
+                    </CardContent>
+                </Box>
+                <Box sx={{display: 'flex', flexDirection: 'column'}}>
+                    <CardContent sx={{flex: '1 0 auto'}}>
+                        <Typography variant="h6" color="#FF0000"><strong>{insertProgress}</strong></Typography>     
+                    </CardContent>
+                </Box>
+            </Card> */}
 
             <ToastContainer />
         </>

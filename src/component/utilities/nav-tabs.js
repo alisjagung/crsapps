@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router";
 import { Link, useLocation } from "react-router-dom";
 
 import { Button, Drawer, Divider, IconButton, Tabs, Tab, Typography, Avatar } from "@mui/material";
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
+import GroupIcon from '@mui/icons-material/Group';
 
 export default function NavTabs()
 {
@@ -12,7 +12,6 @@ export default function NavTabs()
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [avatarInitial, setAvatarInitial] = useState('');
     const container = window !== undefined ? () => window.document.body : undefined;
-    const navigate = useNavigate();
 
     const loginName = localStorage.getItem("userDisplayName");
     const userRole = localStorage.getItem("userRole");
@@ -55,7 +54,7 @@ export default function NavTabs()
 
     return(
         <>
-        <Tabs variant="scrollable" scrollButtons="auto" value={currentTab} aria-label="CRS Tabs">
+        <Tabs variant="scrollable" scrollButtons="auto" value={currentTab} aria-label="CRS Tabs" style={{marginLeft:'16px'}}>
             <IconButton onClick={toggleDrawerOpen} edge="start">
                 <MenuIcon />
             </IconButton>
@@ -83,12 +82,13 @@ export default function NavTabs()
             </IconButton>
             <Divider /> */}
             <div className="drawer-body" style={{marginTop:20}}>
-                <Avatar sx={{backgroundColor:'#085596'}}>{avatarInitial}</Avatar>
+                <Avatar sx={{backgroundColor:'#085596', width: 56, height: 56}}>{avatarInitial}</Avatar>
                 <div style={{marginTop:10}}></div>
                 <Typography variant="subtitle2">{loginName}</Typography>
                 <div style={{marginTop:10}}></div>
                 <Divider />
                 <div style={{marginTop:10}}></div>
+                <Button variant="text" startIcon={<GroupIcon />} sx={{color: '#000000'}}>Join Visit</Button>
                 <Button variant="text" startIcon={<LogoutIcon />} onClick={handleLogout} sx={{color: '#000000'}}>Logout</Button>
             </div>
         </Drawer>

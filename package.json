@@ -30,6 +30,7 @@
     "react-image-file-resizer": "^0.4.7",
     "react-router-dom": "^6.0.2",
     "react-scripts": "4.0.3",
+    "react-signature-pad-wrapper": "^3.0.0",
     "react-tabs": "^3.2.3",
     "react-toastify": "^8.1.0",
     "safari-14-idb-fix": "^3.0.0",

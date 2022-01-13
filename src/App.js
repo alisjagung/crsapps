@@ -14,10 +14,6 @@ import './css/adminlte.css';
 import './css/custom.css';
 
 import { Api } from './component/utilities/api';
-import { MASTER_SERVICES } from './config/config';
-import { NOMINATIM_SERVICES } from './config/config';
-import { HERE_SERVICES } from './config/config';
-import { GEOAPIFY_SERVICES } from './config/config';
 
 import AppsLogo from './component/utilities/logo';
 import Login from './component/modules/login';
@@ -33,7 +29,6 @@ function App()
     {
       localStorage.setItem("lat",pos.coords.latitude);
       localStorage.setItem("long",pos.coords.longitude);
-      console.log(process.env.REACT_APP_AUTH_SERVICES);
 
       var tm = new Date().getUTCHours() + 7;
       if(tm > 24)
@@ -43,15 +38,15 @@ function App()
 
       if(tm >= 6 && tm < 18)
       {
-        Api(MASTER_SERVICES + "location/load-he-location").getApi("",{params :{latitude: pos.coords.latitude, longitude: pos.coords.longitude}})
-        .then(response => console.log(response.data.items[0].title))
+        Api(process.env.REACT_APP_MASTER_SERVICES + "location/load-he-location").getApi("",{params :{latitude: pos.coords.latitude, longitude: pos.coords.longitude}})
+        .then(response => localStorage.setItem("location", response.data.items[0].title))
         .catch(error => AlertMessage().showError(error))
       }
       
       if(tm >= 18 && tm < 6)
       {
-        Api(MASTER_SERVICES + "location/load-ga-location").getApi("",{params :{latitude: pos.coords.latitude, longitude: pos.coords.longitude}})
-        .then(response => console.log(response.data.features[0].properties.formatted))
+        Api(process.env.REACT_APP_MASTER_SERVICES + "location/load-ga-location").getApi("",{params :{latitude: pos.coords.latitude, longitude: pos.coords.longitude}})
+        .then(response => localStorage.setItem("location", response.data.features[0].properties.formatted))
         .catch(error => AlertMessage().showError(error))
       }
 
@@ -73,32 +68,30 @@ function App()
     }
     else
     {
-      alert("Location Unavailable");
+      alert("Geolocation Unavailable");
     }
 
     idbReady().then(() => 
     {
       // Safari has definitely figured out where IndexedDB is.
-      // You can use IndexedDB as usual.
-      console.log("idb ready");
-      
-      const openIdb = openDB("CRSDB", 1, 
+      // You can use IndexedDB as usual.      
+      const openIdb =  window.indexedDB.open("CRSDB", 1);
+      openIdb.onupgradeneeded = function(event)
       {
-        upgrade(openIdb, oldVersion, newVersion, transaction)
+        var db = event.target.result;
+        if(event.oldVersion === 0)
         {
-          if(oldVersion == 0)
-          {
-            const doctorStore = openIdb.createObjectStore('doctor', {keyPath : 'kdDokter'});
-            const doctorIndex = doctorStore.createIndex('doctorNameIndex', 'doctorName');
-            
-            const planningStore = openIdb.createObjectStore('planning', {keyPath : 'planningCode'});
-            const planningIndex = planningStore.createIndex('dateIndex', 'createdDate');
+          const doctorStore = db.createObjectStore('doctor', {keyPath : 'kdDokter'});
+          const doctorIndex = doctorStore.createIndex('doctorNameIndex', 'doctorName');
+          
+          const planningStore = db.createObjectStore('planning', {keyPath : 'planningCode'});
+          const planningIndex = planningStore.createIndex('dateIndex', 'createdDate');
 
-            console.log("initialization done");  
-          }
+          const meetingStore = db.createObjectStore('meeting', {keyPath : 'kdPlanning'});
+          const meetingIndex = meetingStore.createIndex('dateIndex', 'createdDate');
         }
-      });
-    
+      }
+
       openIdb.onsuccess = function()
       {
         localStorage.setItem("openIdb", openIdb.result);

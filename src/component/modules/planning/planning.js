@@ -13,23 +13,20 @@ import PlaylistAddCheckIcon from '@mui/icons-material/PlaylistAddCheck';
 
 import { Api }  from '../../utilities/api';
 import BackdropLoader  from '../../utilities/backdrop-loader';
-import { PLANMEET_SERVICES } from '../../../config/config';
-import { MASTER_SERVICES } from '../../../config/config';
 import AlertMessage from '../../utilities/alert-message';
 
 export default function Planning()
 {
     const [showCustCodeDialog, setShowCustCodeDialog] = useState(false); 
     const [filter, setFilter] = useState('');
-    const [custCode, setCustCode] = useState('');
 
-    //original array of data from database
+    //Original Array of Data from Database
     const [custCodeList, setCustCodeList] = useState([]);
 
-    //array contains selected customer
+    //Array contains Selected Customer
     const [custSelected, setCustSelected] = useState([]);
 
-    //set Fab locaion
+    //Set Fab location
     const fabStyle = {
         margin: 0,
         top: 'auto',
@@ -37,8 +34,43 @@ export default function Planning()
         bottom: 20,
         left: 'auto',
         position: 'fixed',
+        zIndex: 1234 
     };
 
+    //Set Initial View
+    const setDataView = () =>
+    {
+        const openRequest = indexedDB.open("CRSDB", 1);
+        openRequest.onsuccess = function()
+        {
+            const openIdb = openRequest.result;
+            try
+            {
+                const tx = openIdb.transaction("planning", "readonly");
+                const store = tx.objectStore("planning");
+            
+                var reqData = store.getAll();
+                reqData.onsuccess = function()
+                {
+                    if(reqData.result.length > 0)
+                    {
+                        setCustSelected(reqData.result);
+                    }
+                }
+            }
+            catch(err)
+            {
+                AlertMessage().showError(err.toString());
+            }
+        }
+
+        openRequest.onerror = function()
+        {
+            AlertMessage().showError(openRequest.error.toString());
+        }
+    }
+
+    //Load Doctor Data
     const loadDoctor = (filter) =>
     {
         var strFilter = filter === "" || filter === undefined ? '' : filter;
@@ -55,12 +87,43 @@ export default function Planning()
                 var reqData = store.getAll();
                 reqData.onsuccess = function()
                 {
-                    setCustCodeList(reqData.result);    
+                    if(strFilter !== '')
+                    {
+                        strFilter = strFilter.toLowerCase().trim();
+                        if(reqData.result.length > 0)
+                        {
+                            var arrResult = reqData.result.filter(function(item, index, arr)
+                            {   
+                                if(item.doctorName !== undefined && item.doctorName !== null)
+                                {
+                                    if(item.doctorName.toLowerCase().trim().indexOf(strFilter) > 0)
+                                    {
+                                        return item;
+                                    }
+                                    else
+                                    {
+                                        if(item.alamat !== undefined && item.alamat !== null)
+                                        {
+                                            if(item.alamat.toLowerCase().trim().indexOf(strFilter) > 0)
+                                            {
+                                                return item;
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+
+                            setCustCodeList(arrResult);
+                        }
+                    }
+                    else
+                    {
+                        setCustCodeList(reqData.result);    
+                    }
                 }
             }
             catch(err)
             {
-                console.log(err);
                 AlertMessage().showError(err.toString());
             }
         }
@@ -109,11 +172,12 @@ export default function Planning()
         customedItem.spes = item.spes;
         customedItem.alamat = item.alamat;
         customedItem.status = "Preparation";
-        customedItem.createdDate = moment(new Date()).add(-1,'days').format("YYYY-MM-DD");
+        customedItem.createdDate = moment(new Date()).format("YYYY-MM-DD HH:MM:SS");
+        //customedItem.createdDate = moment(new Date()).add(-1,'days').format("YYYY-MM-DD");
 
         var date = new Date();
-        var dt = date.getDate().toString();
-        var mt = (date.getMonth() + 1).toString();
+        var dt = date.getDate() < 10 ? '0' + date.getDate() : date.getDate().toString();
+        var mt = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1).toString() : (date.getMonth() + 1).toString();
         var yr = date.getFullYear().toString();
 
         var dtString = dt.concat(mt).concat(yr);
@@ -126,7 +190,6 @@ export default function Planning()
     //Toggle Customer Check/Unchecked
     const onCustChecked = (e, item) =>
     {
-        console.log(e.target.checked);
         var confirmMessage = "";
         if(e.target.checked)
         {
@@ -145,27 +208,23 @@ export default function Planning()
             if(currentIndex === -1)
             {
                 tempChecked.push(mapCustomedItem(item));
-                addData(mapCustomedItem(item));
+                addPlanningData(mapCustomedItem(item));
             }
             else
             {
                 tempChecked.splice(currentIndex, 1); //remove item from array : (selectedIndex, number of item to be removed)
             }
 
-            setCustSelected(tempChecked);
-            
+            setCustSelected(tempChecked); 
         }
-
-        console.log(custSelected);
     }
 
     //Add Planning to IDb
-    const addData = (dataItem) =>
+    const addPlanningData = (dataItem) =>
     {
         idbReady()
         .then(response =>
         {
-            console.log(response);
             const openRequest = indexedDB.open("CRSDB", 1);
             openRequest.onsuccess = function()
             {
@@ -195,6 +254,87 @@ export default function Planning()
         });
     }
 
+    //Add Meeting to IDb when Finalize
+    const addMeetingData = (arrItem) =>
+    {
+        idbReady()
+        .then(response =>
+        {
+            const openRequest = indexedDB.open("CRSDB", 1);
+            openRequest.onsuccess = function()
+            {
+                try
+                {
+                    const openIdb = openRequest.result;
+                    const tx = openIdb.transaction('meeting', 'readwrite');
+                    const store = tx.objectStore('meeting');
+                
+                    //add new data
+                    const meetingData = mapMeetingData(arrItem);
+
+                    for(var i = 0; i < meetingData.length; i++)
+                    {
+                        const addData = store.add(meetingData[i]);
+                        addData.onerror = function(event)
+                        {
+                            var errMessage = event.target.error.name.toString + " : " + event.target.error.message.toString();
+                            AlertMessage().showError(errMessage);
+                        }
+                    }
+                    
+                }
+                catch(err)
+                {
+                    AlertMessage().showError(err.toString());
+                }
+            }
+        })
+        .catch(err =>
+        {
+            AlertMessage().showError(err.toString());
+        });
+    }
+
+    //Map Planning Data to Meeting Data
+    const mapMeetingData = (arrItem) =>
+    {
+        var arrMeeting = [];
+        for(var i = 0; i < arrItem.length; i++)
+        {
+            var objMeeting = {};
+
+            objMeeting.dataIndex = i;
+            objMeeting.kdUser = localStorage.getItem("userId");
+
+            objMeeting.kdPlanning = arrItem[i].planningCode;
+            objMeeting.datePlanning = arrItem[i].createdDate;
+            objMeeting.dateRealization = moment(new Date()).format("YYYY-MM-DD HH:MM:SS");
+            objMeeting.uploadedDate = moment(new Date()).format("YYYY-MM-DD HH:MM:SS");
+            objMeeting.statusPlanning = "Pending";
+            
+            objMeeting.latitude = "";
+            objMeeting.longitude = "";
+            objMeeting.address = "";
+            objMeeting.meetingDetail = "detail " + i;
+            
+            objMeeting.doctorName = arrItem[i].doctorName;
+            objMeeting.doctorAddress = arrItem[i].alamat;
+            objMeeting.doctorSpec = arrItem[i].spes;
+            objMeeting.doctorNote = "note "+ i;
+            objMeeting.userPhoto = "";
+            objMeeting.doctorSign = "";
+            
+            objMeeting.createdDate = moment(new Date()).format("YYYY-MM-DD HH:MM:SS");
+            objMeeting.createdBy = localStorage.getItem("userId");
+            objMeeting.updatedDate = moment(new Date()).format("YYYY-MM-DD HH:MM:SS");
+            objMeeting.updatedBy = localStorage.getItem("userId");
+
+            arrMeeting.push(objMeeting);
+        }
+
+        return arrMeeting;
+    }
+
     //Finalize Planning
     const onFinalize = () =>
     {
@@ -206,15 +346,79 @@ export default function Planning()
                 AlertMessage().showError("Please Fulfill Minimum Quota of Visit Plan (6 Customer)");
             }
         }
+
+        if(window.confirm("Finalize Today's Planning? This Cannot be Undone"))
+        {
+            //add meeting data to database and idb
+            addMeetingData(custSelected);
+            updateStatusPlanning();
+        }
+    }
+
+    //Update Status Planning from Preparation to Pending
+    const updateStatusPlanning = () =>
+    {
+        //update state 
+        var planStateData = custSelected;
+        planStateData.map(item => item.status = "Pending");
+        setCustSelected(planStateData);
+
+        //update Idb
+        idbReady()
+        .then(response => 
+        {
+            const openRequest = indexedDB.open("CRSDB", 1);
+            openRequest.onsuccess = function()
+            {
+                const openIdb = openRequest.result;
+                const tx = openIdb.transaction("planning", "readwrite");
+                const store = tx.objectStore("planning");
+                
+                //update data
+                const getPlanningIdb = store.getAll();
+                getPlanningIdb.onsuccess = function()
+                {
+                    try
+                    {
+                        var arrPlanning = getPlanningIdb.result;
+                        arrPlanning.map(item => item.status = "Pending");
+                    
+                        for(var i = 0; i < arrPlanning.length; i++)
+                        {
+                            const putData = store.put(arrPlanning[i]);
+                            putData.onerror = function(event)
+                            {
+                                var errMessage = event.target.error.name.toString + " : " + event.target.error.message.toString();
+                                AlertMessage().showError(errMessage);
+                            }
+                        }
+                        setCustSelected(arrPlanning);
+                    }
+                    catch(err)
+                    {
+                        AlertMessage().showError(err.toString());
+                    }
+                }
+
+                getPlanningIdb.onerror = function(event)
+                {
+                    AlertMessage().showError(event.error.toString());
+                }
+            }
+
+            openRequest.onerror = function(event)
+            {
+                AlertMessage().showError(event.error.toString());
+            }
+        });
     }
 
     //Delete Expired Planning (H + 1, Status : Preparation)
     const onDeleteExpiredPlanning = () =>
     {
         //delete from state, if any
-        var dataArr = custSelected.filter(item => item.status == "preparation");
+        var dataArr = custSelected.filter(item => item.status === "preparation");
         var today = moment(new Date()).format("YYYY-MM-DD");
-        console.log("today : " + today);
         var expiredIndex = dataArr.filter(function(item, index, arr)
         {
             var dateDiff = moment(today).subtract(item.createdDate, 'days');
@@ -223,13 +427,12 @@ export default function Planning()
                 return index;
             }
         });
-        console.log(expiredIndex);
 
         if(expiredIndex.length > 0)
         {
             expiredIndex.map(function(item, index, arr)
             {
-                custSelected.splice(item,1);
+                custSelected.splice(item, 1);
             })
         }
         
@@ -250,7 +453,6 @@ export default function Planning()
                     //delete expired data
                     var yday = moment(new Date()).add(-1, 'days').format("YYYY-MM-DD");
                     const delRequest = storeIndex.getAllKeys(IDBKeyRange.upperBound(yday));
-                    console.log(delRequest);
                     delRequest.onsuccess = function()
                     {
                         if(delRequest.result !== undefined && delRequest.length > 0)
@@ -278,21 +480,22 @@ export default function Planning()
         });
     }
 
-    useEffect(() => 
-    {
-        loadDoctor('');
-        onDeleteExpiredPlanning();
-    }, []);
+    // useEffect(() => 
+    // {
+    //     loadDoctor('');
+    //     setDataView();
+    //     onDeleteExpiredPlanning();
+    // }, []);
 
-    useEffect(() => 
-    {
-        loadDoctor(filter);
-    }, [filter]);
+    // useEffect(() => 
+    // {
+    //     loadDoctor(filter);
+    // }, [filter]);
 
     return(
         <>
            {/* Add Customer Button */}
-           <Fab size="medium" color="primary" aria-label="add" style={fabStyle} onClick={onCustCodeClick}>
+           <Fab size="medium" color="primary" aria-label="add" style={fabStyle} onClick={onCustCodeClick} disabled>
                 <AddIcon />
             </Fab>
 
@@ -302,7 +505,7 @@ export default function Planning()
             </Button> */}
 
             {/* Finalize Planning (Update Status) */}
-            <Button variant="outlined" color="success" startIcon={<PlaylistAddCheckIcon />} onClick={onFinalize} disabled={custSelected.length !== 0 ? false : true}>
+            <Button variant="contained" color="success" startIcon={<PlaylistAddCheckIcon />} onClick={onFinalize} disabled={custSelected.length !== 0 ? false : true} sx={{marginLeft:"30px"}}>
                 Finalize
             </Button>
 
@@ -319,8 +522,8 @@ export default function Planning()
                                     <Box sx={{display: 'flex', flexDirection: 'column', width: '100%'}}>
                                         <CardContent sx={{flex: '1 0 auto'}}>
                                             <Typography variant="body2">{item.planningCode}</Typography>
-                                            <Typography variant="h6"><strong>{item.kdDokter} - {item.doctorName}</strong></Typography>
-                                            <Typography variant="body1">{item.spes}</Typography> 
+                                            <Typography variant="h6"><strong>{item.doctorName}</strong></Typography>
+                                            <Typography variant="body1">[{item.spes}]</Typography> 
                                             <br/>      
                                             <Typography variant="body2"><em>{item.alamat}</em></Typography>
                                         </CardContent>
@@ -351,7 +554,7 @@ export default function Planning()
                     </Toolbar>
                 </AppBar>
                 <br/>
-                <Box sx={{display: 'flex', justifyContent: 'space-around'}}>
+                <Box sx={{display: 'flex', justifyContent: 'space-around', width: '100%'}}>
                     <TextField label="Search" variant="outlined"
                             value={filter} onChange={(e) => setFilter(e.target.value)} 
                             InputProps={{endAdornment: 
@@ -374,6 +577,13 @@ export default function Planning()
                                         edge="end" 
                                         onChange={(e) => onCustChecked(e, item)}
                                         checked={custSelected.map(arrItem => arrItem.kdDokter).indexOf(item.kdDokter) !== -1}
+                                        disabled={custSelected.map(function (arrItem, arrIndex, arr)
+                                            {
+                                                if(arrItem.kdDokter && arrItem.status === "Pending")
+                                                {
+                                                    return arrItem.kdDokter;
+                                                }
+                                            }).indexOf(item.kdDokter) !== -1}
                                     />
                                 }
                             >

@@ -14,7 +14,6 @@ export default class BackdropLoader extends React.Component
     setHidden(value)
     {
        this.openLoader = value;
-       console.log(value);
        this.forceUpdate();
     }
 

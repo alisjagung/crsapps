@@ -6,7 +6,9 @@ import App from './App';
 
 import Login from './component/modules/login';
 import Planning from './component/modules/planning/planning';
-import Meeting from './component/modules/meeting';
+import Meeting from './component/modules/meeting/meeting';
+import MeetingDetail from './component/modules/meeting/meeting-detail';
+
 import Extra from './component/modules/extra';
 
 import UserProfile from './component/modules/user-profile';
@@ -31,6 +33,9 @@ ReactDOM.render(
           <Route path="/" element={<App />}>
             <Route path="planning" element={<Planning />} />
             <Route path="meeting" element={<Meeting />} />
+            <Route path="meeting-detail" element={<MeetingDetail />}>
+              <Route path=":id" element={<MeetingDetail />} />
+            </Route>
             <Route path="extra" element={<Extra />} />              
             <Route path="extra/profile" element={<UserProfile />} />
             <Route path="extra/history" element={<History />} />

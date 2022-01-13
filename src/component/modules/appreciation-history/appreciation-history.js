@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import moment from 'moment';
 
+import Fab from '@mui/material/Fab';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -17,9 +18,9 @@ import InputAdornment from '@mui/material/InputAdornment';
 import SearchIcon from '@mui/icons-material/Search';
 import DoubleArrowIcon from '@mui/icons-material/DoubleArrow';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 
 import { Api }  from '../../utilities/api';
-import { PLANMEET_SERVICES } from '../../../config/config';
 
 import './custom.css';
 
@@ -48,13 +49,24 @@ export default class AppreciationHistory extends React.Component
         this.infiniteScroll = this.infiniteScroll.bind(this);
     }
 
+    //Set Fab location
+    fabStyle = {
+        margin: 0,
+        top: 'auto',
+        right: 20,
+        bottom: 20,
+        left: 'auto',
+        position: 'fixed',
+        zIndex: 1234 
+    };
+
     loadData(pageNum, filterString)
     {
         this.openLoaderButtonRef.current.click();
 
         if(filterString !== '' && filterString !== undefined)
         {
-            Api(PLANMEET_SERVICES + "appreciation/load-appreciation-by-user").getApi("",{params: {userCode : localStorage.getItem("userId"), role: localStorage.getItem("userRole"), filter : filterString, page : pageNum}})
+            Api(process.env.REACT_APP_PLANMEET_SERVICES + "appreciation/load-appreciation-by-user").getApi("",{params: {userCode : localStorage.getItem("userId"), role: localStorage.getItem("userRole"), filter : filterString, page : pageNum}})
             .then(response => 
             {
                 this.setState({listItem : [...response.data]});
@@ -67,7 +79,7 @@ export default class AppreciationHistory extends React.Component
         }
         else
         {
-            Api(PLANMEET_SERVICES + "appreciation/load-appreciation-by-user").getApi("",{params: {userCode : localStorage.getItem("userId"), role: localStorage.getItem("userRole"), filter : filterString, page : pageNum}})
+            Api(process.env.REACT_APP_PLANMEET_SERVICES + "appreciation/load-appreciation-by-user").getApi("",{params: {userCode : localStorage.getItem("userId"), role: localStorage.getItem("userRole"), filter : filterString, page : pageNum}})
             .then(response => 
             {
                 this.setState({listItem : [...this.state.listItem, ...response.data]});
@@ -88,7 +100,6 @@ export default class AppreciationHistory extends React.Component
 
     handleSearch()
     {
-        //console.log(this.state.filter);
         this.loadData(this.state.page, this.state.filter);
     }
 
@@ -114,6 +125,11 @@ export default class AppreciationHistory extends React.Component
         this.hideLoaderButtonRef.current.click();
     }
 
+    //go to up
+    onButtonUpClick()
+    {
+        window.scrollTo(0, 0);
+    }
         
     render()
     {
@@ -124,8 +140,13 @@ export default class AppreciationHistory extends React.Component
             <Button hidden={true} ref={this.hideLoaderButtonRef} onClick={() => this.loaderRef.current.setHidden(true)}>Hide Loader</Button>
             <BackdropLoader ref={this.loaderRef} />
 
+            {/* Go to Up Button */}
+            <Fab size="medium" color="primary" aria-label="up" style={this.fabStyle} onClick={this.onButtonUpClick}>
+                <KeyboardArrowUpIcon />
+            </Fab>
+            
             {/* Navigation, Action Button */}
-            <Link to="/extra"><Button variant="outlined" startIcon={<ArrowBackIcon />}>
+            <Link to="/extra"><Button variant="contained" startIcon={<ArrowBackIcon />}>
                 Back
             </Button></Link>&nbsp;&nbsp;&nbsp;
             <hr />
