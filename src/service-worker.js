@@ -24,6 +24,11 @@ precacheAndRoute(self.__WB_MANIFEST);
 // Set up App Shell-style routing, so that all navigation requests
 // are fulfilled with your index.html shell. Learn more at
 // https://developers.google.com/web/fundamentals/architecture/app-shell
+
+const appVersion = "0.6.0";
+const CACHE_VERSION = 2;
+const CURRENT_CACHE = `main-${CACHE_VERSION}`;
+
 const fileExtensionRegexp = new RegExp('/[^/?]+\\.[^/]+$');
 registerRoute(
   // Return false to exempt requests from being fulfilled by index.html.
@@ -70,3 +75,94 @@ self.addEventListener('message', (event) => {
 });
 
 // Any other custom service worker logic can go here.
+// self.addEventListener('activate', function(event) {
+//   event.waitUntil(
+//     caches.keys().then(function(cacheNames) {
+//       return Promise.all(
+//         cacheNames.filter(function(cacheName) {
+//           // Return true if you want to remove this cache,
+//           // but remember that caches are shared across
+//           // the whole origin
+//           return true;
+//         }).map(function(cacheName) {
+//           return caches.delete(cacheName);
+//         })
+//       );
+//     })
+//   );
+// });
+
+// self.addEventListener('fetch', (event) => {
+//   event.respondWith(async function () {
+//     try {
+//       return await fetch(event.request);
+//     } catch (err) {
+//       return caches.match(event.request);
+//     }
+//   }());
+// });
+
+// // on activation we clean up the previously registered service workers
+// self.addEventListener('activate', evt =>
+//   evt.waitUntil(
+//     caches.keys().then(cacheNames => {
+//       return Promise.all(
+//         cacheNames.map(cacheName => {
+//           console.log(cacheName);
+//           if (cacheName !== CURRENT_CACHE) {
+//             return caches.delete(cacheName);
+//           }
+//         })
+//       );
+//     })
+//   )
+// );
+
+// // on install we download the routes we want to cache for offline
+// // these are the routes we are going to cache for offline support
+// const cacheFiles = [];
+// self.addEventListener('install', evt =>
+//   evt.waitUntil(
+//     caches.open(CURRENT_CACHE).then(cache => {
+//       return cache.addAll(cacheFiles);
+//     })
+//   )
+// );
+
+// // fetch the resource from the network
+// const fromNetwork = (request, timeout) =>
+//   new Promise((fulfill, reject) => {
+//     const timeoutId = setTimeout(reject, timeout);
+//     fetch(request).then(response => {
+//       clearTimeout(timeoutId);
+//       fulfill(response);
+//       update(request);
+//     }, reject);
+//   });
+
+// // fetch the resource from the browser cache
+// const fromCache = request =>
+//   caches
+//     .open(CURRENT_CACHE)
+//     .then(cache =>
+//       cache
+//         .match(request)
+//         .then(matching => matching || cache.match('/offline/'))
+//     );
+
+// // cache the current page to make it available for offline
+// const update = request =>
+//   caches
+//     .open(CURRENT_CACHE)
+//     .then(cache =>
+//       fetch(request).then(response => cache.put(request, response))
+//     );
+
+// // general strategy when making a request (eg if online try to fetch it
+// // from the network with a timeout, if something fails serve from cache)
+// self.addEventListener('fetch', evt => {
+//   evt.respondWith(
+//     fromNetwork(evt.request, 10000).catch(() => fromCache(evt.request))
+//   );
+//   evt.waitUntil(update(evt.request));
+// });

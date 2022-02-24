@@ -1,13 +1,14 @@
+//React
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-
-import idbReady from 'safari-14-idb-fix';
-
+//Material
 import { Button, Box, Card, CardContent, Typography } from '@mui/material';
-import { ToastContainer } from 'react-toastify';
-
+//Idb
+import idbReady from 'safari-14-idb-fix';
+//Icon
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-
+//Component
+import { ToastContainer } from 'react-toastify';
 import { Api }  from '../../utilities/api';
 import AlertMessage from '../../utilities/alert-message';
 
@@ -67,6 +68,7 @@ export default function SyncData()
         })
     }
 
+    // Comment - Launch Appreciation
     useEffect(()=>
     {        
         // Api(process.env.REACT_APP_MASTER_SERVICES + "dokter/load-dokter-by-ref").getApi("",{params: {refCode : localStorage.getItem("userRef"), startDataIndex : 0, perPage : 50000, filterBy : '', orderBy : 'kdReference', orderByDirection : 'asc'}})
@@ -84,7 +86,7 @@ export default function SyncData()
         // })
         // .catch(error =>
         // {
-        //     AlertMessage().showError(error.message);
+        //     AlertMessage().showError(error.response.data.message);
         // });   
         
     },[]);
@@ -104,7 +106,9 @@ export default function SyncData()
             <Typography variant="h6">Doctor Data</Typography>
             <br />
 
-            {/* <Card sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', color: '#000000', backgroundColor: '#bbdefb'}}>
+            <p style={{color: "#FF0000"}}><em>*please wait until all status become completed.</em></p>
+
+            <Card sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'stretch', color: '#000000', backgroundColor: '#bbdefb'}}>
                 <Box sx={{display: 'flex', flexDirection: 'column'}}>
                     <CardContent sx={{flex: '1 0 auto'}}>
                         <Typography variant="h6">Delete Current Record Data</Typography>
@@ -129,7 +133,7 @@ export default function SyncData()
                         <Typography variant="h6" color="#FF0000"><strong>{insertProgress}</strong></Typography>     
                     </CardContent>
                 </Box>
-            </Card> */}
+            </Card>
 
             <ToastContainer />
         </>

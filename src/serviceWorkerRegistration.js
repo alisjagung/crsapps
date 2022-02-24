@@ -1,6 +1,8 @@
 // This optional code is used to register a service worker.
 // register() is not called by default.
 
+import AlertMessage from "./component/utilities/alert-message";
+
 // This lets the app load faster on subsequent visits in production, and gives
 // it offline capabilities. However, it also means that developers (and users)
 // will only see deployed updates on subsequent visits to a page, after all the
@@ -38,7 +40,8 @@ export function register(config) {
 
         // Add some additional logging to localhost, pointing developers to the
         // service worker/PWA documentation.
-        navigator.serviceWorker.ready.then(() => {
+        navigator.serviceWorker.ready.then(() => 
+        {
           console.log(
             'This web app is being served cache-first by a service ' +
               'worker. To learn more, visit https://cra.link/PWA'
@@ -52,18 +55,27 @@ export function register(config) {
   }
 }
 
-function registerValidSW(swUrl, config) {
+function registerValidSW(swUrl, config) 
+{
   navigator.serviceWorker
     .register(swUrl)
-    .then((registration) => {
-      registration.onupdatefound = () => {
+    .then((registration) => 
+    {
+      //console.log(registration);
+      var appVersion = "0.6.0";
+      registration.onupdatefound = () => 
+      {
         const installingWorker = registration.installing;
-        if (installingWorker == null) {
+        if (installingWorker == null) 
+        {
           return;
         }
-        installingWorker.onstatechange = () => {
-          if (installingWorker.state === 'installed') {
-            if (navigator.serviceWorker.controller) {
+        installingWorker.onstatechange = () => 
+        {
+          if (installingWorker.state === 'installed') 
+          {
+            if (navigator.serviceWorker.controller) 
+            {
               // At this point, the updated precached content has been fetched,
               // but the previous service worker will still serve the older
               // content until all client tabs are closed.
@@ -71,19 +83,23 @@ function registerValidSW(swUrl, config) {
                 'New content is available and will be used when all ' +
                   'tabs for this page are closed. See https://cra.link/PWA.'
               );
-
+              AlertMessage().showInfo("Updates are available. Please close this apps and re-launch.");
               // Execute callback
-              if (config && config.onUpdate) {
+              if (config && config.onUpdate) 
+              {
                 config.onUpdate(registration);
               }
-            } else {
+            } 
+            else 
+            {
               // At this point, everything has been precached.
               // It's the perfect time to display a
               // "Content is cached for offline use." message.
               console.log('Content is cached for offline use.');
 
               // Execute callback
-              if (config && config.onSuccess) {
+              if (config && config.onSuccess)
+               {
                 config.onSuccess(registration);
               }
             }
@@ -96,12 +112,15 @@ function registerValidSW(swUrl, config) {
     });
 }
 
-function checkValidServiceWorker(swUrl, config) {
+function checkValidServiceWorker(swUrl, config) 
+{
   // Check if the service worker can be found. If it can't reload the page.
-  fetch(swUrl, {
+  fetch(swUrl, 
+  {
     headers: { 'Service-Worker': 'script' },
   })
-    .then((response) => {
+    .then((response) => 
+    {
       // Ensure service worker exists, and that we really are getting a JS file.
       const contentType = response.headers.get('content-type');
       if (
@@ -124,13 +143,17 @@ function checkValidServiceWorker(swUrl, config) {
     });
 }
 
-export function unregister() {
-  if ('serviceWorker' in navigator) {
+export function unregister() 
+{
+  if ('serviceWorker' in navigator) 
+  {
     navigator.serviceWorker.ready
-      .then((registration) => {
+      .then((registration) => 
+      {
         registration.unregister();
       })
-      .catch((error) => {
+      .catch((error) => 
+      {
         console.error(error.message);
       });
   }

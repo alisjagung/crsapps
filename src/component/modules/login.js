@@ -1,13 +1,14 @@
+//React
 import React, { useState } from 'react';
 //import { useNavigate } from 'react-router-dom';
-import Logo from '../../img/logo-fahrenheit-putih.png';
-import '../../css/custom.css';
-
+//Component
 import { ToastContainer } from 'react-toastify';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-
 import { Api }  from '../utilities/api';
 import AlertMessage from '../utilities/alert-message';
+//CSS
+import Logo from '../../img/logo-fahrenheit-putih.png';
+import '../../css/custom.css';
 
 export default function Login()
 {
@@ -15,10 +16,10 @@ export default function Login()
     const [pwd, setPwd] = useState('');
     //const navigate = useNavigate();
 
-    const browserWidth = window.innerWidth;
-    const browserHeight = window.innerHeight;
+    //const browserWidth = window.innerWidth;
+    //const browserHeight = window.innerHeight;
 
-    console.log(browserWidth + " " + browserHeight);
+    //console.log(browserWidth + " " + browserHeight);
 
     const onUsernameChange = (e) =>
     {
@@ -32,7 +33,7 @@ export default function Login()
 
     const handleSubmit = () =>
     {  
-        Api(process.env.REACT_APP_AUTH_SERVICES + "user-login?apps=crs").postApi({kdUser : username, password : pwd}, {})
+        Api(process.env.REACT_APP_AUTH_SERVICES + "user-login?apps=crs").postApi({kdUser : username, password : pwd}, {headers: {"Access-Control-Allow-Origin": "*"}})
         .then(response =>
         {
            if(response.isSuccess)
@@ -41,8 +42,9 @@ export default function Login()
             localStorage.setItem("userRef", response.data.kdReference);
             localStorage.setItem("userDisplayName", response.data.nameUser);
             localStorage.setItem("userRole", response.data.role);
+            localStorage.setItem("leaderCode", response.data.leaderCode);
             //navigate("/planning", {replace : true});
-            window.location.href = "/crs-mobile/planning";
+            window.location.href = "/home";
            }
            else
            {
@@ -52,7 +54,14 @@ export default function Login()
         })
         .catch(error =>
         {
-            AlertMessage().showError(error.message);
+            if(error.response === undefined)
+            {
+                AlertMessage().showError(error.message);
+            }
+            else
+            {
+                AlertMessage().showError(error.response.data.message);
+            }
         });   
     }
     
@@ -69,7 +78,7 @@ export default function Login()
 
                         <form name="loginForm" id="login-form">
                             <div className="input-group mb-3">
-                                <input type="text" className="form-control" placeholder="User Code" value={username} onChange={onUsernameChange} required />
+                                <input type="text" className="form-control" placeholder="USERCODE" value={username} onChange={onUsernameChange} required style={{textTransform: "uppercase"}} />
                                 <div className="input-group-append">
                                     <div className="input-group-text">
                                         <FontAwesomeIcon icon={["fas","envelope"]}  />
@@ -77,7 +86,7 @@ export default function Login()
                                 </div>
                             </div>
                             <div className="input-group mb-3">
-                                <input type="password" className="form-control" placeholder="Password" value={pwd} onChange={onPasswordChange} required />
+                                <input type="password" className="form-control" placeholder="PASSWORD" value={pwd} onChange={onPasswordChange} required />
                                 <div className="input-group-append">
                                     <div className="input-group-text">
                                     <FontAwesomeIcon icon={["fas","lock"]}  />

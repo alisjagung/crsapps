@@ -1,19 +1,28 @@
+//React
 import React from 'react';
 import { Link } from "react-router-dom";
-import { Box, Button, Card, CardContent, Divider,
-   List, ListItem, Typography } from '@mui/material';
-
+//Material
+import { Box, Button, Card, CardContent, Divider, List, ListItem, Typography } from '@mui/material';
+//Idb
+import idbReady from 'safari-14-idb-fix';
+//Icon
 import DoubleArrowIcon from '@mui/icons-material/DoubleArrow'
-
+//Component
 import { Api }  from '../../utilities/api';
-import BackdropLoader  from '../../utilities/backdrop-loader';
 import AlertMessage from '../../utilities/alert-message';
 
 export default class Meeting extends React.Component
 {
     constructor(props)
     {
+        // Comment - Launch Appreciation : load idb, arr data
         super(props);
+        
+        this.LoadMeetingData = this.LoadMeetingData.bind(this);
+        this.updateMeetingData = this.updateMeetingData.bind(this);
+
+        //this.LoadMeetingData();
+
         this.state = {
             showDetailMeetingDialog : false,
             showSignatureDialog : false,
@@ -23,10 +32,6 @@ export default class Meeting extends React.Component
             meetingData : {},
 
         };
-
-        this.onMeetingCardClick = this.onMeetingCardClick.bind(this);
-        this.onMeetingDetailClose = this.onMeetingDetailClose.bind(this);
-        this.LoadMeetingIDb = this.LoadMeetingIDb.bind(this);
     }
 
     //Styles
@@ -49,117 +54,116 @@ export default class Meeting extends React.Component
         }
     };
 
-    //Load Meeting Data from IDb
-    LoadMeetingIDb()
+    //--- START MEETING DATA RELATED ---//
+
+    //Load Meeting Data
+    LoadMeetingData()
     {
-        const openRequest = indexedDB.open("CRSDB", 1);
-        openRequest.onsuccess = function()
+        try
         {
-            const openIdb = openRequest.result;
-            try
+            Api(process.env.REACT_APP_PLANMEET_SERVICES + "planning/load-today-planning-by-user").getApi("",{params: {userCode : localStorage.getItem("userId"), role: localStorage.getItem("userRole"), filter : "", page : 1}})
+            .then(response =>
             {
-                const tx = openIdb.transaction("meeting", "readonly");
-                const store = tx.objectStore("meeting");
-            
-                var reqData = store.getAll();
-                reqData.onsuccess = function()
+                if(response.data !== undefined)
                 {
-                    if(reqData.result.length > 0)
+                    localStorage.setItem("arrMeetingData", JSON.stringify(response.data));
+                    this.setState({arrMeetingData : JSON.parse(localStorage.getItem("arrMeetingData"))});
+                }
+
+                //update data on idb from database
+                this.updateMeetingData();
+            })
+            .catch(error =>
+            {
+                const openRequest = indexedDB.open("CRSDB", 1);
+                openRequest.onsuccess = function()
+                {
+                    const openIdb = openRequest.result;
+                    try
                     {
-                        localStorage.setItem("arrMeetingData", JSON.stringify(reqData.result));
+                        const tx = openIdb.transaction("meeting", "readonly");
+                        const store = tx.objectStore("meeting");
+                    
+                        var reqData = store.getAll();
+                        reqData.onsuccess = function()
+                        {
+                            if(reqData.result.length > 0)
+                            {
+                                localStorage.setItem("arrMeetingData", JSON.stringify(reqData.result));
+                            }
+                        }
+                    }
+                    catch(err)
+                    {
+                        AlertMessage().showError(err.toString());
                     }
                 }
-            }
-            catch(err)
-            {
-                AlertMessage().showError(err.toString());
-            }
-        };
-
-        openRequest.onerror = function()
+        
+                openRequest.onerror = function()
+                {
+                    AlertMessage().showError(openRequest.error.toString());
+                }
+            })
+        }
+        catch(err)
         {
-            AlertMessage().showError(openRequest.error.toString());
+            AlertMessage().showError(err.toString());
         }
     }
 
-    //Toggle Open Meeting Detail Dialog
-    onMeetingCardClick(index)
+    //Update Meeting Data on IDb
+    updateMeetingData()
     {
-        var arrData =  [...this.state.arrMeetingData];
-        var data = arrData[index];
-        
-        if (data.address == "" || data.address == undefined || data.address == null)
-        {   
-            //set location
-            navigator.geolocation.getCurrentPosition(function(pos) 
+        idbReady().then(() =>
+        {
+            const openRequest = indexedDB.open("CRSDB", 1);
+            openRequest.onsuccess = function()
             {
-                var tm = new Date().getUTCHours() + 7;
-                if(tm > 24)
+                const openIdb = openRequest.result;
+                try
                 {
-                    tm -= 24;
-                }
-            
-                if(tm >= 6 && tm < 18)
-                {
-                    Api(process.env.REACT_APP_MASTER_SERVICES + "location/load-he-location").getApi("",{params :{latitude: pos.coords.latitude, longitude: pos.coords.longitude}})
-                    .then(response => 
-                        {
-                            localStorage.setItem("latMeeting", pos.coords.latitude);
-                            localStorage.setItem("longMeeting", pos.coords.longitude);
-                            localStorage.setItem("locMeeting", response.data.items[0].title);
-                        })
-                    .catch(error => AlertMessage().showError(error))
-                }
-                else
-                {
-                    Api(process.env.REACT_APP_MASTER_SERVICES + "location/load-ga-location").getApi("",{params :{latitude: pos.coords.latitude, longitude: pos.coords.longitude}})
-                    .then(response => 
-                        {
-                            localStorage.setItem("latMeeting", pos.coords.latitude);
-                            localStorage.setItem("longMeeting", pos.coords.longitude);
-                            localStorage.setItem("locMeeting", response.data.features[0].properties.formatted);
-                        })
-                    .then(res =>
-                        {
-                            data.latitude = localStorage.getItem("latMeeting");
-                            data.longitude = localStorage.getItem("longMeeting");
-                            data.address = localStorage.getItem("locMeeting");                    
-                        })
-                    .catch(error => AlertMessage().showError(error))
-                }                              
-            });
+                    const tx = openIdb.transaction('meeting', 'readwrite');
+                    const store = tx.objectStore('meeting');
 
-            this.setState({meetingData : data}, () => 
+                    //delete all data first
+                    const clearIdb =  store.clear();
+                    clearIdb.onsuccess = function()
+                    {
+                        //add new data from database
+                        var arrMeeting = JSON.parse(localStorage.getItem("arrMeetingData"));
+
+                        arrMeeting.map(function(item, index, arr) 
+                        { 
+                            //add new data
+                            const addData = store.add(item);
+                            addData.onerror = function(event)
+                            {
+                                var errMessage = event.target.error.name.toString + " : " + event.target.error.message.toString();
+                                AlertMessage().showError(errMessage);
+                            }
+                        });
+
+                    }
+                }
+                catch(err)
+                {
+                    AlertMessage().showError(err.toString());
+                }     
+            }
+
+            openRequest.onerror = function()
             {
-               //console.log(this.state.meetingData);
-               this.setState({showDetailMeetingDialog : true});
-            });
-
-         }
+                AlertMessage().showError(openRequest.error.toString());
+            }
+        })
     }
 
-   //Toggle Close Meeting Detail Dialog
-   onMeetingDetailClose(index, dataObj)
+    //--- END MEETING DATA RELATED ---//
+
+   componentDidMount()
    {
-    var tempArr = [...this.state.arrMeetingData];
-
-    tempArr[index].latitude = dataObj.latitude;
-    tempArr[index].longitude = dataObj.longitude;
-    tempArr[index].address = dataObj.address;
-    tempArr[index].doctorNote = dataObj.doctorNote;
-    tempArr[index].meetingDetail = dataObj.meetingDetail;
-    tempArr[index].userPhoto = dataObj.userPhoto;
-    tempArr[index].doctorSign = dataObj.doctorSign;
-
-    this.setState({arrMeetingData : tempArr}, () => {this.setState({showDetailMeetingDialog : false})});
+       
    }
-   
-    componentDidMount()
-    {
-        //load meeting from idb
-        //this.LoadMeetingIDb();
-        //this.setState({arrMeetingData : JSON.parse(localStorage.getItem("arrMeetingData"))});
-    }
 
     render()
     {
@@ -178,10 +182,10 @@ export default class Meeting extends React.Component
                                 <Box sx={{display: 'flex', flexDirection: 'column', width: '100%'}}>
                                     <CardContent sx={{flex: '1 0 auto'}}>
                                         <Typography variant="body2">{item.kdPlanning}</Typography>
-                                        <Typography variant="h6"><strong>{item.doctorName}</strong></Typography>
-                                        <Typography variant="body1">[{item.doctorSpec}]</Typography> 
+                                        <Typography variant="h6"><strong>{item.namaDokter}</strong></Typography>
+                                        <Typography variant="body1">[{item.spes}]</Typography> 
                                         <br/>      
-                                        <Typography variant="body2"><em>{item.doctorAddress}</em></Typography>
+                                        <Typography variant="body2"><em>{item.alamatDokter}</em></Typography>
                                     </CardContent>
                                 </Box>
                                 <Box sx={{display: 'flex', flexDirection: 'column'}}>

@@ -49,9 +49,33 @@ export const Api = url =>
         })
     }
 
+    const putData = (data, config) =>
+    {
+        return new Promise((resolve,reject) => 
+        {
+            axios.put(apiURL, data, config)
+            .then(response => 
+                {
+                    if(response.status === 200)
+                    {
+                        resolve(response.data);
+                    }
+                    else
+                    {
+                        reject(response);
+                    }
+                })
+            .catch(error => 
+                {
+                    reject(error);
+                })
+        })
+    }
+
     return{
         getApi : (data, config) => getData(data, config),
-        postApi : (data, config) => postData(data, config)
+        postApi : (data, config) => postData(data, config),
+        putApi : (data, config) => putData(data, config),
     }
 
 }

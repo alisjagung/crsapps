@@ -1,23 +1,15 @@
-import React from "react";
+//React
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-
-import Box from "@mui/material/Box";
-import Grid from "@mui/material/Grid";
-import { Card, CardActions, CardContent, Typography} from "@mui/material";
-
+//Material
+import { Box, Card, CardActions, CardContent, Grid } from "@mui/material";
+//Component
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 export default function Extra()
 {
-    const arrIcon = [
-        {"id": 1, "icon": ["fas","coffee"], "title": "Profile", "route": "profile"},
-        {"id": 2, "icon": ["fas","calendar-alt"], "title": "History", "route": "history"},
-        {"id": 3, "icon": ["fas","medal"], "title": "Appreciation", "route": "appreciation"},
-        {"id": 4, "icon": ["fas","calendar"], "title": "Appreciation History", "route": "appreciation-list"},
-        {"id": 5, "icon": ["fas","sync"], "title": "Synchronize", "route": "sync"},
-        {"id": 6, "icon": ["fas","cloud-upload-alt"], "title": "Upload", "route": "upload"},
-        //{"id": 7, "icon": ["fas","sign-out-alt"], "title": "Logout", "route": "logout"}
-    ]
+    const [arrIcon, setArrIcon] = useState([]);
+    const userRole = localStorage.getItem("userRole");
 
     const navigate = useNavigate();
 
@@ -32,8 +24,32 @@ export default function Extra()
         {
             navigate(item.route, {replace: true});
         }
-        
     }
+
+    useEffect(() => 
+    {
+        // Comment - Launch Appreciation
+        if(userRole !== "Audit")
+        {
+            setArrIcon([
+                //{"id": 1, "icon": ["fas","coffee"], "title": "Profile", "route": "profile"},
+                //{"id": 2, "icon": ["fas","calendar-alt"], "title": "History", "route": "history"},
+                {"id": 3, "icon": ["fas","medal"], "title": "Appreciation", "route": "appreciation"},
+                {"id": 4, "icon": ["fas","calendar"], "title": "Appreciation History", "route": "appreciation-list"},
+               // {"id": 5, "icon": ["fas","sync"], "title": "Synchronize", "route": "sync"},
+                //{"id": 6, "icon": ["fas","cloud-upload-alt"], "title": "Upload", "route": "upload"}
+
+                //{"id": 7, "icon": ["fas","sign-out-alt"], "title": "Logout", "route": "logout"}
+            ]);
+        }
+        else
+        {
+            setArrIcon([
+                {"id": 4, "icon": ["fas","calendar"], "title": "Appreciation History", "route": "appreciation-list"},
+                //{"id": 7, "icon": ["fas","sign-out-alt"], "title": "Logout", "route": "logout"}
+            ]);
+        }
+    }, []);
 
     return(
         <>
@@ -48,9 +64,10 @@ export default function Extra()
                                     <FontAwesomeIcon icon={item.icon}  />
                                 </CardContent>
                                 <CardActions style={{alignItems:"center",justifyContent:"center"}}>
-                                    <Typography variant="subtitle1" noWrap={true}>
+                                    {/* <Typography variant="subtitle1" noWrap={true}>
                                         {item.title}
-                                    </Typography>
+                                    </Typography> */}
+                                    <p style={{fontSize: '6', textAlign: 'center'}}>{item.title}</p>
                                 </CardActions>
                             </Card>
                         </Grid>

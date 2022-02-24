@@ -7,3 +7,63 @@
 {
     display: block;
 }
+
+.filterCustCode #txtFilterCustCode
+{
+    height: 100% !important;
+    min-height: 38px !important;
+    width: 180px;
+    border-color: hsl(0, 0%, 80%);
+    border-radius: 4px;
+    border-width: 1.6px;
+}
+
+.filterCustCode #txtFilterCustCode [class*=control]
+{
+    height: 100% !important;
+    min-height: 38px !important;
+    width: 180px;
+    border-color: hsl(0, 0%, 80%);
+    border-radius: 4px;
+    border-width: 1.6px;
+}
+
+.filterPICName #txtFilterPICName
+{
+    height: 100% !important;
+    min-height: 38px !important;
+    width: 180px;
+    border-color: hsl(0, 0%, 80%);
+    border-radius: 4px;
+    border-width: 1.6px;
+}
+
+.filterPICName #txtFilterPICName [class*=control]
+{
+    height: 100% !important;
+    min-height: 38px !important;
+    width: 180px;
+    border-color: hsl(0, 0%, 80%);
+    border-radius: 4px;
+    border-width: 1.6px;
+}
+
+.filterApprDate #txtFilterApprDate
+{
+    height: 100% !important;
+    min-height: 38px !important;
+    width: 180px;
+    border-color: hsl(0, 0%, 80%);
+    border-radius: 4px;
+    border-width: 1.6px;
+}
+
+.filterApprDate #txtFilterApprDate [class*=control]
+{
+    height: 100% !important;
+    min-height: 38px !important;
+    width: 180px;
+    border-color: hsl(0, 0%, 80%);
+    border-radius: 4px;
+    border-width: 1.6px;
+}

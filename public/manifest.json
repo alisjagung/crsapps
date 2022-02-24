@@ -1,6 +1,7 @@
 {
   "short_name": "CRS",
   "name": "CRS",
+  "version": 28,
   "icons": [
     {
       "src": "favicon.ico",
